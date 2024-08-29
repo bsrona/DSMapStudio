@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using DotNext.Collections.Generic;
+using Microsoft.Extensions.Logging;
 using SoapstoneLib.Proto.Internal;
 using SoulsFormats;
 using StudioCore.Editor;
@@ -31,16 +32,20 @@ public abstract class StudioResource
     public bool IsLoading { get; private set; }
     public void Load(Project project)
     {
+        if (IsLoaded || IsLoading)
+            return;
         IsLoading = true;
         List<TaskManager.LiveTask> tasks = new();
         foreach (StudioResource res in GetDependencies(project))
         {
-            if ((!res.IsLoaded && !res.IsLoading) || project.Type != res.GameType)
+            if (!res.IsLoaded)
             {
-                TaskManager.LiveTask t = new TaskManager.LiveTask($@"Resource - Loading {res.nameForUI}({project?.Settings.ProjectName})", TaskManager.RequeueType.None, true, () => {
+                string taskName = res.GetTaskName(project);
+                TaskManager.LiveTask t = new TaskManager.LiveTask(taskName, TaskManager.RequeueType.None, true, () => {
                     res.Load(project);
                 });
                 TaskManager.Run(t);
+                t = TaskManager.GetActiveTasks().FirstOrDefault((x) => x.TaskId == taskName);
                 tasks.Add(t);
             }
         }
@@ -51,6 +56,10 @@ public abstract class StudioResource
         Load();
         IsLoading = false;
         IsLoaded = true;
+    }
+    public virtual string GetTaskName(Project project)
+    {
+        return $@"Resource - Loading {nameForUI}";
     }
     protected abstract void Load();
     protected abstract IEnumerable<StudioResource> GetDependencies(Project project);

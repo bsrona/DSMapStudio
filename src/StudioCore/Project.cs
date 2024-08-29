@@ -32,7 +32,7 @@ public class Project
     /// </summary>
     public Project(ProjectSettings settings)
     {
-        Settings = settings;
+        Settings = settings.CopyForGameDir();
         AssetLocator = new(this, settings.GameRoot);
         ParentProject = null;
 

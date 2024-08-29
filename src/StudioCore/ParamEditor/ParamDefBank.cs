@@ -102,7 +102,7 @@ public class ParamDefBank : StudioResource
         }
     }
 
-    private void LoadParams()
+    private void LoadParamDefs()
     {
         IsMetaLoaded = false;
         List<(string, PARAMDEF)> defPairs = LoadParamdefs();
@@ -115,7 +115,7 @@ public class ParamDefBank : StudioResource
 
     protected override void Load()
     {
-        LoadParams();
+        LoadParamDefs();
     }
 
     protected override IEnumerable<StudioResource> GetDependencies(Project project)

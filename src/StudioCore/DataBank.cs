@@ -24,5 +24,9 @@ public abstract class DataBank : StudioResource
     {
         Project = project;
     }
+    public override string GetTaskName(Project project)
+    {
+        return $@"Resource - Loading {nameForUI} ({project?.Settings.ProjectName})";
+    }
     protected abstract void Save();
 }

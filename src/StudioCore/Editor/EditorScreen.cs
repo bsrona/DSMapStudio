@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using Veldrid;
 using Veldrid.Sdl2;
@@ -92,6 +93,20 @@ public interface EditorScreen
                 return false;
         }
         return true;
+    }
+    public void Load(Project project)
+    {
+        foreach (StudioResource res in GetDependencies(project))
+        {
+            if (!res.IsLoaded)
+            {
+                string taskName = res.GetTaskName(project);
+                TaskManager.LiveTask t = new TaskManager.LiveTask(taskName, TaskManager.RequeueType.None, true, () => {
+                    res.Load(project);
+                });
+                TaskManager.Run(t);
+            }
+        }
     }
 
     protected abstract IEnumerable<StudioResource> GetDependencies(Project project);
