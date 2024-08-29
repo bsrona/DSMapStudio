@@ -551,11 +551,11 @@ public class FMGLanguage
 /// <summary>
 ///     Class that stores all the strings for a Souls project.
 /// </summary>
-public class FMGBank
+public class FMGBank : DataBank
 {
     public Project Project;
 
-    public FMGBank(Project project)
+    public FMGBank(Project project) : base(project, "FMGs")
     {
         Project = project;
     }
@@ -794,6 +794,21 @@ public class FMGBank
         }
 
         return eGroup;
+    }
+
+    protected override void Save()
+    {
+        SaveFMGs();
+    }
+
+    protected override void Load()
+    {
+        LoadFMGs();
+    }
+
+    protected override IEnumerable<StudioResource> GetDependencies(Project project)
+    {
+        return [];
     }
 }
 

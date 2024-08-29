@@ -2109,4 +2109,9 @@ public class MsbEditorScreen : EditorScreen, SceneTreeEventHandler
             ImGui.EndCombo();
         }
     }
+
+    IEnumerable<StudioResource> EditorScreen.GetDependencies(Project project)
+    {
+        return [];
+    }
 }

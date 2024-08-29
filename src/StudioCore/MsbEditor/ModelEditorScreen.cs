@@ -361,4 +361,9 @@ public class ModelEditorScreen : EditorScreen, AssetBrowserEventHandler, SceneTr
 
         ResourceManager.AddResourceListener<FlverResource>(asset.AssetVirtualPath, this, AccessLevel.AccessFull);
     }
+
+    IEnumerable<StudioResource> EditorScreen.GetDependencies(Project project)
+    {
+        return [];
+    }
 }

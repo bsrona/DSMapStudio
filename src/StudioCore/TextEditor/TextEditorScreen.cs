@@ -770,4 +770,9 @@ public unsafe class TextEditorScreen : EditorScreen
         ResetActionManager();
         Locator.ActiveProject.FMGBank.LoadFMGs(path);
     }
+
+    IEnumerable<StudioResource> EditorScreen.GetDependencies(Project project)
+    {
+        return [project.FMGBank];
+    }
 }

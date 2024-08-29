@@ -1,5 +1,6 @@
 ﻿using Andre.Formats;
 using Microsoft.Extensions.Logging;
+using Microsoft.Toolkit.HighPerformance.Buffers;
 using Octokit;
 using SoulsFormats;
 using StudioCore.Editor;
@@ -15,7 +16,7 @@ namespace StudioCore.ParamEditor;
 /// <summary>
 ///     Utilities for dealing with global params for a game
 /// </summary>
-public class ParamBank
+public class ParamBank : DataBank
 {
     public enum ParamUpgradeResult
     {
@@ -182,7 +183,7 @@ public class ParamBank
         }
     }
 
-    public ParamBank(Project owner)
+    public ParamBank(Project owner) : base(owner, "Params")
     {
         Project = owner;
     }
@@ -2015,6 +2016,21 @@ public class ParamBank
         }
 
         _storedStrippedRowNames = null;
+    }
+
+    protected override void Save()
+    {
+        SaveParams(Project.Settings.UseLooseParams);
+    }
+
+    protected override void Load()
+    {
+        LoadParams();
+    }
+
+    protected override IEnumerable<StudioResource> GetDependencies(Project project)
+    {
+        return [];
     }
 
     private enum EditOperation

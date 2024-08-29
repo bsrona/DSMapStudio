@@ -1,4 +1,6 @@
-﻿using Veldrid;
+﻿using System.Collections.Generic;
+using System.Reflection;
+using Veldrid;
 using Veldrid.Sdl2;
 
 namespace StudioCore.Editor;
@@ -81,4 +83,16 @@ public interface EditorScreen
     public void Draw(GraphicsDevice device, CommandList cl)
     {
     }
+
+    public bool IsEnabled(Project project)
+    {
+        foreach (StudioResource res in GetDependencies(project))
+        {
+            if (!res.IsLoaded)
+                return false;
+        }
+        return true;
+    }
+
+    protected abstract IEnumerable<StudioResource> GetDependencies(Project project);
 }

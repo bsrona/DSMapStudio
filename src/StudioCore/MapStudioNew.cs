@@ -1339,7 +1339,10 @@ public class MapStudioNew
             {
                 ImGui.PopStyleColor(1);
                 ImGui.PopStyleVar(1);
-                editor.OnGUI(commands);
+                if (editor.IsEnabled(Locator.ActiveProject))
+                    editor.OnGUI(commands);
+                else
+                    ImGui.Text("Resources required for editor not loaded.");
                 ImGui.End();
                 _focusedEditor = editor;
                 editor.Update(deltaseconds);

@@ -2092,4 +2092,9 @@ public class ParamEditorScreen : EditorScreen
             return null;
         }
     }
+
+    IEnumerable<StudioResource> EditorScreen.GetDependencies(Project project)
+    {
+        return [project.ParamBank];
+    }
 }
