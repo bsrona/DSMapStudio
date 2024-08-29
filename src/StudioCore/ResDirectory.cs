@@ -18,5 +18,6 @@ public class ResDirectory
     public static ResDirectory CurrentGame { get; set; } = new();
 
     public ParamDefBank ParamDefBank = new();
+    public ParamMetaBank ParamMetaBank = new();
 
 }

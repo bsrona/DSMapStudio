@@ -28,11 +28,7 @@ public class ParamDefBank : StudioResource
     /// </summary>
     private Dictionary<string, PARAMDEF> _paramdefs = new();
 
-    //TODO private this
-    public Dictionary<PARAMDEF, ParamMetaData> ParamMetas = new();
-
-    public bool IsMetaLoaded = false;
-
+    private List<(string, PARAMDEF)> _defPairs = new();
 
     /// <summary>
     ///     Mapping from Param filename -> Manual ParamType.
@@ -50,12 +46,17 @@ public class ParamDefBank : StudioResource
         return _paramdefs;
     }
 
+    public List<(string, PARAMDEF)> GetParamDefByFileNames()
+    {
+        return _defPairs;
+    }
+
     public Dictionary<string, string> GetTentativeParamTypes()
     {
         return _tentativeParamType;
     }
 
-    private List<(string, PARAMDEF)> LoadParamdefs()
+    private void LoadParamdefs()
     {
         _paramdefs = new Dictionary<string, PARAMDEF>();
         _tentativeParamType = new Dictionary<string, string>();
@@ -88,34 +89,11 @@ public class ParamDefBank : StudioResource
             }
         }
 
-        return defPairs;
+        _defPairs = defPairs;
     }
-    public void LoadParamMeta(List<(string, PARAMDEF)> defPairs)
-    {
-        //This way of tying stuff together still sucks
-        var mdir = Locator.ActiveProject.AssetLocator.GetProjectFilePath($@"{Locator.ActiveProject.AssetLocator.GetParamdexDir()}\Meta");
-        foreach ((var f, PARAMDEF pdef) in defPairs)
-        {
-            var fName = f.Substring(f.LastIndexOf('\\') + 1);
-            var md = ParamMetaData.XmlDeserialize($@"{mdir}\{fName}", pdef);
-            ParamMetas.Add(pdef, md);
-        }
-    }
-
-    private void LoadParamDefs()
-    {
-        IsMetaLoaded = false;
-        List<(string, PARAMDEF)> defPairs = LoadParamdefs();
-        TaskManager.Run(new TaskManager.LiveTask("Param - Load Meta", TaskManager.RequeueType.WaitThenRequeue, false, () =>
-        {
-            LoadParamMeta(defPairs);
-            IsMetaLoaded = true;
-        }));
-    }
-
     protected override void Load()
     {
-        LoadParamDefs();
+        LoadParamdefs();
     }
 
     protected override IEnumerable<StudioResource> GetDependencies(Project project)

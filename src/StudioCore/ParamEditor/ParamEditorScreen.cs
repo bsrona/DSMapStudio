@@ -871,7 +871,7 @@ public class ParamEditorScreen : EditorScreen
             return;
         }
 
-        if (!ResDirectory.CurrentGame.ParamDefBank.IsMetaLoaded)
+        if (!ResDirectory.CurrentGame.ParamMetaBank.IsLoaded)
         {
             ImGui.Text("Loading Meta...");
             return;
@@ -2095,6 +2095,6 @@ public class ParamEditorScreen : EditorScreen
 
     IEnumerable<StudioResource> EditorScreen.GetDependencies(Project project)
     {
-        return [project.ParamBank, project.ParentProject.ParamBank];
+        return [project.ParamBank, project.ParentProject.ParamBank, ResDirectory.CurrentGame.ParamMetaBank];
     }
 }

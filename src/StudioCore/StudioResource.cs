@@ -42,6 +42,8 @@ public abstract class StudioResource
             {
                 string taskName = res.GetTaskName();
                 TaskManager.LiveTask t = new TaskManager.LiveTask(taskName, TaskManager.RequeueType.None, true, () => {
+                    if (res.IsLoaded || res.IsLoading)
+                        return;
                     res.Load(project);
                 });
                 TaskManager.Run(t);
