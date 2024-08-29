@@ -835,7 +835,7 @@ public class ParamEditorView
                 ImGui.PushStyleVarVec2(ImGuiStyleVar.FramePadding, new Vector2(0, 0));
                 ParamEditorCommon.PropertyField(compareCol.ValueType, c.Value, ref newval, false);
                 if (ParamEditorCommon.UpdateProperty(_propEditor.ContextActionManager, c, compareColProp,
-                        c.Value) && !ParamBank.VanillaBank.IsLoadingParams)
+                        c.Value) && ParamBank.VanillaBank.IsLoaded)
                 {
                     ParamBank.PrimaryBank.RefreshParamRowDiffs(r, activeParam);
                 }

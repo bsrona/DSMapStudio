@@ -500,7 +500,7 @@ public class ParamRowEditor
 
         var committed = ParamEditorCommon.UpdateProperty(ContextActionManager,
             nullableCell != null ? nullableCell : row, proprow, oldval);
-        if (committed && !ParamBank.VanillaBank.IsLoadingParams)
+        if (committed && ParamBank.VanillaBank.IsLoaded)
         {
             ParamBank.PrimaryBank.RefreshParamRowDiffs(row, activeParam);
         }

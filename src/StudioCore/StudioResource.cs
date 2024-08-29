@@ -29,18 +29,16 @@ public abstract class StudioResource
 
     public bool IsLoaded { get; private set; }
     public bool IsLoading { get; private set; }
-    protected void Load(Project project)
+    public void Load(Project project)
     {
+        IsLoading = true;
         List<TaskManager.LiveTask> tasks = new();
         foreach (StudioResource res in GetDependencies(project))
         {
-            if (!res.IsLoaded && !res.IsLoading)
+            if ((!res.IsLoaded && !res.IsLoading) || project.Type != res.GameType)
             {
-                TaskManager.LiveTask t = new TaskManager.LiveTask("Resource - Loading "+nameForUI, TaskManager.RequeueType.None, true, () => {
-                    IsLoading = true;
-                    res.Load();
-                    IsLoading = false;
-                    IsLoaded = true;
+                TaskManager.LiveTask t = new TaskManager.LiveTask($@"Resource - Loading {res.nameForUI}({project?.Settings.ProjectName})", TaskManager.RequeueType.None, true, () => {
+                    res.Load(project);
                 });
                 TaskManager.Run(t);
                 tasks.Add(t);
@@ -50,6 +48,9 @@ public abstract class StudioResource
         {
             t.Task.Wait();
         }
+        Load();
+        IsLoading = false;
+        IsLoaded = true;
     }
     protected abstract void Load();
     protected abstract IEnumerable<StudioResource> GetDependencies(Project project);

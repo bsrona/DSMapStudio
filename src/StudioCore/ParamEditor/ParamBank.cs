@@ -38,30 +38,9 @@ public class ParamBank : DataBank
     public static ParamBank VanillaBank => Locator.ActiveProject.ParentProject.ParamBank;
     public static Dictionary<string, ParamBank> AuxBanks = new();
 
-    /// <summary>
-    ///     Mapping from path -> PARAMDEF for cache and and comparison purposes. TODO: check for paramdef comparisons and evaluate if the file/paramdef was actually the same.
-    /// </summary>
-    private static readonly Dictionary<string, PARAMDEF> _paramdefsCache = new();
-
-
     public static string ClipboardParam = null;
     public static List<Param.Row> ClipboardRows = new();
 
-    /// <summary>
-    ///     Mapping from ParamType -> PARAMDEF.
-    /// </summary>
-    private Dictionary<string, PARAMDEF> _paramdefs = new();
-
-    //TODO private this
-    public Dictionary<PARAMDEF, ParamMetaData> ParamMetas = new();
-
-
-    /// <summary>
-    ///     Mapping from Param filename -> Manual ParamType.
-    ///     This is for params with no usable ParamType at some particular game version.
-    ///     By convention, ParamTypes ending in "_TENTATIVE" do not have official data to reference.
-    /// </summary>
-    private Dictionary<string, string> _tentativeParamType;
 
     /// <summary>
     ///     Map related params.
@@ -126,15 +105,11 @@ public class ParamBank : DataBank
 
     private Param EnemyParam => _params["EnemyParam"];
 
-    public bool IsDefsLoaded { get; private set; }
-    public static bool IsMetaLoaded { get; private set; }
-    public bool IsLoadingParams { get; private set; }
-
     public IReadOnlyDictionary<string, Param> Params
     {
         get
         {
-            if (IsLoadingParams)
+            if (IsLoading)
             {
                 return null;
             }
@@ -149,7 +124,7 @@ public class ParamBank : DataBank
     {
         get
         {
-            if (IsLoadingParams)
+            if (IsLoading)
             {
                 return null;
             }
@@ -168,7 +143,7 @@ public class ParamBank : DataBank
     {
         get
         {
-            if (IsLoadingParams)
+            if (IsLoading)
             {
                 return null;
             }
@@ -188,11 +163,6 @@ public class ParamBank : DataBank
         Project = owner;
     }
 
-    public Dictionary<string, PARAMDEF> GetParamDefs()
-    {
-        return _paramdefs;
-    }
-
     private static FileNotFoundException CreateParamMissingException(GameType type)
     {
         if (type is GameType.DarkSoulsPTDE or GameType.Sekiro)
@@ -209,53 +179,6 @@ public class ParamBank : DataBank
 
         return new FileNotFoundException(
             $"Cannot locate param files for {type}.\nYour game folder may be missing game files, please verify game files through steam to restore them.");
-    }
-
-    private List<(string, PARAMDEF)> LoadParamdefs()
-    {
-        _paramdefs = new Dictionary<string, PARAMDEF>();
-        _tentativeParamType = new Dictionary<string, string>();
-        var files = Project.AssetLocator.GetAllProjectFiles($@"Paramdex\{AssetUtils.GetGameIDForDir(Locator.ActiveProject.Type)}\Defs", ["*.xml"], true, false);
-        List<(string, PARAMDEF)> defPairs = new();
-        foreach (var f in files)
-        {
-            if (!_paramdefsCache.TryGetValue(f, out PARAMDEF pdef))
-            {
-                pdef = PARAMDEF.XmlDeserialize(f, true);
-            } 
-            _paramdefs.Add(pdef.ParamType, pdef);
-            defPairs.Add((f, pdef));
-        }
-
-        var tentativeMappingPath = Project.AssetLocator.GetProjectFilePath($@"{Project.AssetLocator.GetParamdexDir()}\Defs\TentativeParamType.csv");
-        if (File.Exists(tentativeMappingPath))
-        {
-            // No proper CSV library is used currently, and all CSV parsing is in the context of param files.
-            // If a CSV library is introduced in DSMapStudio, use it here.
-            foreach (var line in File.ReadAllLines(tentativeMappingPath).Skip(1))
-            {
-                var parts = line.Split(',');
-                if (parts.Length != 2 || string.IsNullOrWhiteSpace(parts[0]) || string.IsNullOrWhiteSpace(parts[1]))
-                {
-                    throw new FormatException($"Malformed line in {tentativeMappingPath}: {line}");
-                }
-
-                _tentativeParamType[parts[0]] = parts[1];
-            }
-        }
-
-        return defPairs;
-    }
-    public void LoadParamMeta(List<(string, PARAMDEF)> defPairs)
-    {
-        //This way of tying stuff together still sucks
-        var mdir = Project.AssetLocator.GetProjectFilePath($@"{Locator.ActiveProject.AssetLocator.GetParamdexDir()}\Meta");
-        foreach ((var f, PARAMDEF pdef) in defPairs)
-        {
-            var fName = f.Substring(f.LastIndexOf('\\') + 1);
-            var md = ParamMetaData.XmlDeserialize($@"{mdir}\{fName}", pdef);
-            ParamMetas.Add(pdef, md);
-        }
     }
 
     public CompoundAction LoadParamDefaultNames(string param = null, bool onlyAffectEmptyNames = false, bool onlyAffectVanillaNames = false)
@@ -328,9 +251,9 @@ public class ParamBank : DataBank
                 p = Param.ReadIgnoreCompression(f.Bytes);
                 if (!string.IsNullOrEmpty(p.ParamType))
                 {
-                    if (!_paramdefs.ContainsKey(p.ParamType))
+                    if (!ResDirectory.CurrentGame.ParamDefBank.GetParamDefs().ContainsKey(p.ParamType))
                     {
-                        if (_tentativeParamType.TryGetValue(paramName, out var newParamType))
+                        if (ResDirectory.CurrentGame.ParamDefBank.GetTentativeParamTypes().TryGetValue(paramName, out var newParamType))
                         {
                             _usedTentativeParamTypes.Add(paramName, p.ParamType);
                             p.ParamType = newParamType;
@@ -349,7 +272,7 @@ public class ParamBank : DataBank
                 }
                 else
                 {
-                    if (_tentativeParamType.TryGetValue(paramName, out var newParamType))
+                    if (ResDirectory.CurrentGame.ParamDefBank.GetTentativeParamTypes().TryGetValue(paramName, out var newParamType))
                     {
                         _usedTentativeParamTypes.Add(paramName, p.ParamType);
                         p.ParamType = newParamType;
@@ -369,7 +292,7 @@ public class ParamBank : DataBank
             else
             {
                 p = Param.ReadIgnoreCompression(f.Bytes);
-                if (!_paramdefs.ContainsKey(p.ParamType ?? ""))
+                if (!ResDirectory.CurrentGame.ParamDefBank.GetParamDefs().ContainsKey(p.ParamType ?? ""))
                 {
                     TaskLogs.AddLog(
                         $"Couldn't find ParamDef for param {paramName} with ParamType \"{p.ParamType}\".",
@@ -392,7 +315,7 @@ public class ParamBank : DataBank
                 throw new Exception("Param type is unexpectedly null");
             }
 
-            PARAMDEF def = _paramdefs[p.ParamType];
+            PARAMDEF def = ResDirectory.CurrentGame.ParamDefBank.GetParamDefs()[p.ParamType];
             try
             {
                 p.ApplyParamdef(def, version);
@@ -550,7 +473,7 @@ public class ParamBank : DataBank
                 if (loose)
                 {
                     // Loose params: override params already loaded via regulation
-                    PARAMDEF def = _paramdefs[lp.ParamType];
+                    PARAMDEF def = ResDirectory.CurrentGame.ParamDefBank.GetParamDefs()[lp.ParamType];
                     lp.ApplyParamdef(def);
                     _params[name] = lp;
                 }
@@ -559,7 +482,7 @@ public class ParamBank : DataBank
                     // Non-loose params: do not override params already loaded via regulation
                     if (!_params.ContainsKey(name))
                     {
-                        PARAMDEF def = _paramdefs[lp.ParamType];
+                        PARAMDEF def = ResDirectory.CurrentGame.ParamDefBank.GetParamDefs()[lp.ParamType];
                         lp.ApplyParamdef(def);
                         _params.Add(name, lp);
                     }
@@ -715,23 +638,7 @@ public class ParamBank : DataBank
 
     private void LoadParams()
     {
-
-        IsDefsLoaded = false;
-        IsLoadingParams = true;
-
         _params = new Dictionary<string, Param>();
-
-        if (Project.Type != GameType.Undefined)
-        {
-            List<(string, PARAMDEF)> defPairs = LoadParamdefs();
-            IsDefsLoaded = true;
-            TaskManager.Run(new TaskManager.LiveTask("Param - Load Meta",
-                TaskManager.RequeueType.WaitThenRequeue, false, () =>
-                {
-                    LoadParamMeta(defPairs);
-                    IsMetaLoaded = true;
-                }));
-        }
 
         if (Project.Type == GameType.DemonsSouls)
         {
@@ -774,15 +681,12 @@ public class ParamBank : DataBank
         }
 
         ClearParamDiffCaches();
-
-        IsLoadingParams = false;
     }
 
     //Some returns and repetition, but it keeps all threading and loading-flags visible inside this method
-    public static void ReloadParams(ProjectSettings settings, NewProjectOptions options)
+    /*public static void ReloadParams(ProjectSettings settings, NewProjectOptions options)
     {
-        IsMetaLoaded = false;
-
+        //TODO: subsume with databank system
         AuxBanks = new Dictionary<string, ParamBank>();
 
         UICache.ClearCaches();
@@ -821,7 +725,7 @@ public class ParamBank : DataBank
                 }
                 UICache.ClearCaches();
             }));
-    }
+    }*/
 
     public static void LoadAuxBank(string dir, ProjectSettings settings = null)
     {
@@ -879,7 +783,7 @@ public class ParamBank : DataBank
 
     private Dictionary<string, HashSet<int>> GetParamDiff(ParamBank otherBank)
     {
-        if (IsLoadingParams || otherBank == null || otherBank.IsLoadingParams)
+        if (IsLoading || otherBank == null || otherBank.IsLoading)
         {
             return null;
         }
@@ -2026,11 +1930,12 @@ public class ParamBank : DataBank
     protected override void Load()
     {
         LoadParams();
+        UICache.ClearCaches();
     }
 
     protected override IEnumerable<StudioResource> GetDependencies(Project project)
     {
-        return [];
+        return [ResDirectory.CurrentGame.ParamDefBank];
     }
 
     private enum EditOperation

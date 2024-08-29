@@ -181,7 +181,7 @@ public class ParamEditorSelectionState
         if (_activeParam != null)
         {
             ParamEditorParamSelectionState s = _paramStates[_activeParam];
-            if (s.activeRow != null && !ParamBank.VanillaBank.IsLoadingParams)
+            if (s.activeRow != null && ParamBank.VanillaBank.IsLoaded)
             {
                 ParamBank.PrimaryBank.RefreshParamRowDiffs(s.activeRow, _activeParam);
             }
@@ -194,7 +194,7 @@ public class ParamEditorSelectionState
             s.activeRow = row;
             s.selectionRows.Clear();
             s.selectionRows.Add(row);
-            if (s.activeRow != null && !ParamBank.VanillaBank.IsLoadingParams)
+            if (s.activeRow != null && ParamBank.VanillaBank.IsLoaded)
             {
                 ParamBank.PrimaryBank.RefreshParamRowDiffs(s.activeRow, _activeParam);
             }

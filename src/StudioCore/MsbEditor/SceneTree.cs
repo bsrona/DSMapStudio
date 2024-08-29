@@ -616,7 +616,7 @@ public class SceneTree : IActionEventHandler
             {
                 if (Locator.AssetLocator.Type is GameType.DarkSoulsIISOTFS)
                 {
-                    if (ParamBank.PrimaryBank.IsLoadingParams)
+                    if (ParamBank.PrimaryBank.IsLoading)
                     {
                         ImGui.NewLine();
                         ImGui.Text("  Please wait for params to finish loading.");

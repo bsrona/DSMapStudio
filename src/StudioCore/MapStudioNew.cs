@@ -413,7 +413,8 @@ public class MapStudioNew
         ModelAliasBank.Bank.ReloadAliasBank();
         MapAliasBank.Bank.ReloadAliasBank();
 
-        ParamBank.ReloadParams(newsettings, options);
+        Locator.ActiveProject.ParamBank.Load(Locator.ActiveProject);// ReloadParams(newsettings, options);
+        Locator.ActiveProject.ParentProject.ParamBank.Load(Locator.ActiveProject);
         MtdBank.ReloadMtds();
         FMGBank.ReloadFMGs();
 

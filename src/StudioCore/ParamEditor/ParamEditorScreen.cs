@@ -571,7 +571,7 @@ public class ParamEditorScreen : EditorScreen
 
             ImGui.Separator();
             if (ImGui.MenuItem("Check all params for edits", null, false,
-                    !ParamBank.PrimaryBank.IsLoadingParams && !ParamBank.VanillaBank.IsLoadingParams))
+                    ParamBank.PrimaryBank.IsLoaded && ParamBank.VanillaBank.IsLoaded))
             {
                 ParamBank.RefreshAllParamDiffCaches(true);
             }
@@ -859,7 +859,7 @@ public class ParamEditorScreen : EditorScreen
             return;
         }
 
-        if (ParamBank.PrimaryBank.IsLoadingParams)
+        if (ParamBank.PrimaryBank.IsLoading)
         {
             ImGui.Text("Loading Params...");
             return;
@@ -871,7 +871,7 @@ public class ParamEditorScreen : EditorScreen
             return;
         }
 
-        if (!ParamBank.IsMetaLoaded)
+        if (!ResDirectory.CurrentGame.ParamDefBank.IsMetaLoaded)
         {
             ImGui.Text("Loading Meta...");
             return;
@@ -1216,12 +1216,12 @@ public class ParamEditorScreen : EditorScreen
 
     private void ParamUpgradeDisplay()
     {
-        if (Locator.ActiveProject != null && Locator.ActiveProject.ParamBank.IsDefsLoaded
+        if (Locator.ActiveProject != null && ResDirectory.CurrentGame.ParamDefBank.IsLoaded
             && ParamBank.PrimaryBank.Params != null
             && ParamBank.VanillaBank.Params != null
             && ParamUpgrade_SupportedGames.Contains(Locator.AssetLocator.Type)
-            && !ParamBank.PrimaryBank.IsLoadingParams
-            && !ParamBank.VanillaBank.IsLoadingParams
+            && ParamBank.PrimaryBank.IsLoaded
+            && ParamBank.VanillaBank.IsLoaded
             && ParamBank.PrimaryBank.ParamVersion < ParamBank.VanillaBank.ParamVersion)
         {
             if (!_paramUpgraderLoaded)
