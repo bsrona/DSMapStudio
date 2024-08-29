@@ -100,7 +100,7 @@ public interface EditorScreen
         {
             if (!res.IsLoaded)
             {
-                string taskName = res.GetTaskName(project);
+                string taskName = res.GetTaskName();
                 TaskManager.LiveTask t = new TaskManager.LiveTask(taskName, TaskManager.RequeueType.None, true, () => {
                     res.Load(project);
                 });

@@ -418,8 +418,7 @@ public class MapStudioNew
         foreach (EditorScreen editor in _editors)
         {
             editor.OnProjectChanged(_projectSettings);
-            editor.Load(Locator.ActiveProject); //primary
-            editor.Load(Locator.ActiveProject.ParentProject); //vanilla
+            editor.Load(Locator.ActiveProject);
         }
 
         
