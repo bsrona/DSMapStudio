@@ -40,16 +40,11 @@ public abstract class StudioResource
         {
             if (!res.IsLoaded)
             {
-                string taskName = res.GetTaskName();
-                TaskManager.LiveTask t = new TaskManager.LiveTask(taskName, TaskManager.RequeueType.None, true, () => {
-                    if (res.IsLoaded || res.IsLoading)
-                        return;
+                TaskManager.LiveTask t = new TaskManager.LiveTask(res.GetTaskName(), TaskManager.RequeueType.None, true, () => {
                     res.Load(project);
                 });
-                TaskManager.Run(t);
-                t = TaskManager.GetActiveTasks().FirstOrDefault((x) => x.TaskId == taskName);
-                if (t != null)
-                    tasks.Add(t);
+                t = TaskManager.Run(t);
+                tasks.Add(t);
             }
         }
         foreach (TaskManager.LiveTask t in tasks)
@@ -60,6 +55,7 @@ public abstract class StudioResource
         IsLoading = false;
         IsLoaded = true;
     }
+
     public virtual string GetTaskName()
     {
         return $@"Resource - Loading {nameForUI}";
