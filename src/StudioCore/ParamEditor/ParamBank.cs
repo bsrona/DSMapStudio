@@ -25,8 +25,6 @@ public partial class ParamBank : DataBank
 
     private static readonly HashSet<int> EMPTYSET = new();
 
-    public Project Project;
-
     private Dictionary<string, Param> _params;
 
     private ulong _paramVersion;
@@ -55,7 +53,6 @@ public partial class ParamBank : DataBank
     public ulong ParamVersion => _paramVersion;
     public ParamBank(Project owner) : base(owner, "Params")
     {
-        Project = owner;
     }
 
     private static FileNotFoundException CreateParamMissingException(GameType type)
