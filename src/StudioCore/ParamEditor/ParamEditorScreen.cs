@@ -226,6 +226,31 @@ public class ParamEditorScreen : EditorScreen
     public string CommandEndpoint => "param";
     public string SaveType => "Params";
 
+    /// <summary>
+    ///     Param name - FMGCategory map
+    /// </summary>
+    public static readonly List<(string, FmgEntryCategory)> ParamToFmgCategoryList = new()
+    {
+        ("EquipParamAccessory", FmgEntryCategory.Rings),
+        ("EquipParamGoods", FmgEntryCategory.Goods),
+        ("EquipParamWeapon", FmgEntryCategory.Weapons),
+        ("EquipParamProtector", FmgEntryCategory.Armor),
+        ("Magic", FmgEntryCategory.Spells),
+        ("EquipParamGem", FmgEntryCategory.Gem),
+        ("SwordArtsParam", FmgEntryCategory.SwordArts),
+        ("EquipParamGenerator", FmgEntryCategory.Generator),
+        ("EquipParamFcs", FmgEntryCategory.FCS),
+        ("EquipParamBooster", FmgEntryCategory.Booster),
+        ("ArchiveParam", FmgEntryCategory.Archive),
+        ("MissionParam", FmgEntryCategory.Mission)
+    };
+    public enum RowGetType
+    {
+        AllRows = 0,
+        ModifiedRows = 1,
+        SelectedRows = 2
+    }
+
     public void DrawEditorMenu()
     {
         // Menu Options
@@ -328,20 +353,20 @@ public class ParamEditorScreen : EditorScreen
                 ImGui.Separator();
                 if (ImGui.BeginMenu("All rows"))
                 {
-                    CsvExportDisplay(ParamBank.RowGetType.AllRows);
+                    CsvExportDisplay(RowGetType.AllRows);
                     ImGui.EndMenu();
                 }
 
                 if (ImGui.BeginMenu("Modified rows",
                         ParamBank.PrimaryBank.GetVanillaDiffRows(_activeView._selection.GetActiveParam()).Any()))
                 {
-                    CsvExportDisplay(ParamBank.RowGetType.ModifiedRows);
+                    CsvExportDisplay(RowGetType.ModifiedRows);
                     ImGui.EndMenu();
                 }
 
                 if (ImGui.BeginMenu("Selected rows", _activeView._selection.RowSelectionExists()))
                 {
-                    CsvExportDisplay(ParamBank.RowGetType.SelectedRows);
+                    CsvExportDisplay(RowGetType.SelectedRows);
                     ImGui.EndMenu();
                 }
 
@@ -905,7 +930,7 @@ public class ParamEditorScreen : EditorScreen
 
         if (InputTracker.GetKeyDown(KeyBindings.Current.Param_ExportCSV))
         {
-            EditorCommandQueue.AddCommand($@"param/menu/massEditCSVExport/{ParamBank.RowGetType.AllRows}");
+            EditorCommandQueue.AddCommand($@"param/menu/massEditCSVExport/{RowGetType.AllRows}");
         }
 
         // Parse commands
@@ -986,7 +1011,7 @@ public class ParamEditorScreen : EditorScreen
                 }
                 else if (initcmd[1] == "massEditCSVExport")
                 {
-                    IReadOnlyList<Param.Row> rows = CsvExportGetRows(Enum.Parse<ParamBank.RowGetType>(initcmd[2]));
+                    IReadOnlyList<Param.Row> rows = CsvExportGetRows(Enum.Parse<RowGetType>(initcmd[2]));
                     _currentMEditCSVOutput = ParamIO.GenerateCSV(rows,
                         ParamBank.PrimaryBank.Params[_activeView._selection.GetActiveParam()],
                         CFG.Current.Param_Export_Delimiter[0]);
@@ -999,7 +1024,7 @@ public class ParamEditorScreen : EditorScreen
                 else if (initcmd[1] == "massEditSingleCSVExport")
                 {
                     _currentMEditSingleCSVField = initcmd[2];
-                    IReadOnlyList<Param.Row> rows = CsvExportGetRows(Enum.Parse<ParamBank.RowGetType>(initcmd[3]));
+                    IReadOnlyList<Param.Row> rows = CsvExportGetRows(Enum.Parse<RowGetType>(initcmd[3]));
                     _currentMEditCSVOutput = ParamIO.GenerateSingleCSV(rows,
                         ParamBank.PrimaryBank.Params[_activeView._selection.GetActiveParam()],
                         _currentMEditSingleCSVField,
@@ -1476,24 +1501,24 @@ public class ParamEditorScreen : EditorScreen
             () => ParamBank.RefreshAllParamDiffCaches(false)));
     }
 
-    private IReadOnlyList<Param.Row> CsvExportGetRows(ParamBank.RowGetType rowType)
+    private IReadOnlyList<Param.Row> CsvExportGetRows(RowGetType rowType)
     {
         IReadOnlyList<Param.Row> rows;
 
         var activeParam = _activeView._selection.GetActiveParam();
-        if (rowType == ParamBank.RowGetType.AllRows)
+        if (rowType == RowGetType.AllRows)
         {
             // All rows
             rows = ParamBank.PrimaryBank.Params[activeParam].Rows;
         }
-        else if (rowType == ParamBank.RowGetType.ModifiedRows)
+        else if (rowType == RowGetType.ModifiedRows)
         {
             // Modified rows
             HashSet<int> vanillaDiffCache = ParamBank.PrimaryBank.GetVanillaDiffRows(activeParam);
             rows = ParamBank.PrimaryBank.Params[activeParam].Rows.Where(p => vanillaDiffCache.Contains(p.ID))
                 .ToList();
         }
-        else if (rowType == ParamBank.RowGetType.SelectedRows)
+        else if (rowType == RowGetType.SelectedRows)
         {
             // Selected rows
             rows = _activeView._selection.GetSelectedRows();
@@ -1509,7 +1534,7 @@ public class ParamEditorScreen : EditorScreen
     /// <summary>
     ///     CSV Export DIsplay
     /// </summary>
-    private void CsvExportDisplay(ParamBank.RowGetType rowType)
+    private void CsvExportDisplay(RowGetType rowType)
     {
         if (ImGui.BeginMenu("Export to window..."))
         {

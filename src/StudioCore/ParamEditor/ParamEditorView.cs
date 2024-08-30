@@ -173,6 +173,28 @@ public class ParamEditorView
         }
     }
 
+    /// <summary>
+    ///     Map related params.
+    /// </summary>
+    public static readonly List<string> DS2MapParamlist = new()
+    {
+        "demopointlight",
+        "demospotlight",
+        "eventlocation",
+        "eventparam",
+        "GeneralLocationEventParam",
+        "generatorparam",
+        "generatorregistparam",
+        "generatorlocation",
+        "generatordbglocation",
+        "hitgroupparam",
+        "intrudepointparam",
+        "mapobjectinstanceparam",
+        "maptargetdirparam",
+        "npctalkparam",
+        "treasureboxparam"
+    };
+
     private void ParamView_ParamList_Main(bool doFocus, float scale, float scrollTo)
     {
         List<string> paramKeyList = UICache.GetCached(_paramEditor, _viewIndex, () =>
@@ -199,11 +221,11 @@ public class ParamEditorView
             {
                 if (_mapParamView)
                 {
-                    keyList = keyList.FindAll(p => ParamBank.DS2MapParamlist.Contains(p.Split('_')[0]));
+                    keyList = keyList.FindAll(p => DS2MapParamlist.Contains(p.Split('_')[0]));
                 }
                 else
                 {
-                    keyList = keyList.FindAll(p => !ParamBank.DS2MapParamlist.Contains(p.Split('_')[0]));
+                    keyList = keyList.FindAll(p => !DS2MapParamlist.Contains(p.Split('_')[0]));
                 }
             }
             else if (Locator.AssetLocator.Type is GameType.EldenRing)
