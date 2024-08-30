@@ -1,4 +1,5 @@
 ﻿using DotNext.Collections.Generic;
+using DotNext.Threading;
 using Microsoft.Extensions.Logging;
 using SoapstoneLib.Proto.Internal;
 using SoulsFormats;
@@ -30,30 +31,35 @@ public abstract class StudioResource
 
     public bool IsLoaded { get; private set; }
     public bool IsLoading { get; private set; }
-    public void Load(Project project)
+
+    private void Load(Project project)
     {
         if (IsLoaded || IsLoading)
             return;
-        IsLoading = true;
-        List<TaskManager.LiveTask> tasks = new();
-        foreach (StudioResource res in GetDependencies(project))
+        // Locking on this isn't ideal if anything else could lock the object. But we don't have Lock yet.
+        lock (this)
         {
-            if (!res.IsLoaded)
+            IsLoading = true;
+            List<TaskManager.LiveTask> tasks = new();
+            foreach (StudioResource res in GetDependencies(project))
             {
-                TaskManager.LiveTask t = new TaskManager.LiveTask(res.GetTaskName(), TaskManager.RequeueType.None, true, () => {
-                    res.Load(project);
-                });
-                t = TaskManager.Run(t);
-                tasks.Add(t);
+                if (!res.IsLoaded)
+                {
+                    TaskManager.LiveTask t = new TaskManager.LiveTask(res.GetTaskName(), TaskManager.RequeueType.None, true, () => {
+                        res.Load(project);
+                    });
+                    t = TaskManager.Run(t);
+                    tasks.Add(t);
+                }
             }
+            foreach (TaskManager.LiveTask t in tasks)
+            {
+                t.Task.Wait();
+            }
+            Load();
+            IsLoaded = true;
+            IsLoading = false;
         }
-        foreach (TaskManager.LiveTask t in tasks)
-        {
-            t.Task.Wait();
-        }
-        Load();
-        IsLoading = false;
-        IsLoaded = true;
     }
 
     public virtual string GetTaskName()
