@@ -15,5 +15,5 @@ public abstract class DataBank : StudioResource
     {
         return $@"Resource - Loading {nameForUI} ({Project.Settings.ProjectName})";
     }
-    protected abstract void Save();
+    public abstract void Save();
 }

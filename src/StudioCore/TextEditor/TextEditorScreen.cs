@@ -295,12 +295,12 @@ public unsafe class TextEditorScreen : EditorScreen
 
     public void Save()
     {
-        Locator.ActiveProject.FMGBank.SaveFMGs();
+        Locator.ActiveProject.FMGBank.Save();
     }
 
     public void SaveAll()
     {
-        Locator.ActiveProject.FMGBank.SaveFMGs();
+        Locator.ActiveProject.FMGBank.Save();
     }
 
     private void ClearTextEditorCache()

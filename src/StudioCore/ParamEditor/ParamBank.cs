@@ -633,8 +633,7 @@ public class ParamBank : DataBank
             LoadParamFromBinder(bnd, ref _params, out _, false);
         }
     }
-
-    private void LoadParams()
+    protected override void Load()
     {
         _params = new Dictionary<string, Param>();
 
@@ -679,6 +678,7 @@ public class ParamBank : DataBank
         }
 
         ClearParamDiffCaches();
+        UICache.ClearCaches();
     }
 
     //Some returns and repetition, but it keeps all threading and loading-flags visible inside this method
@@ -731,7 +731,7 @@ public class ParamBank : DataBank
         Project siblingVirtualProject = new Project(dir, Locator.ActiveProject.ParentProject, settings);
         ParamBank newBank = siblingVirtualProject.ParamBank;
 
-        newBank.LoadParams();
+        newBank.Load();
 
         newBank.RefreshParamDiffCaches(true);
         AuxBanks[Path.GetFileName(dir).Replace(' ', '_')] = newBank;
@@ -1384,9 +1384,9 @@ public class ParamBank : DataBank
 
         _pendingUpgrade = false;
     }
-
-    public void SaveParams(bool loose = false)
+    public override void Save()
     {
+        bool loose = Project.Settings.UseLooseParams;
         if (_params == null)
         {
             return;
@@ -1918,17 +1918,6 @@ public class ParamBank : DataBank
         }
 
         _storedStrippedRowNames = null;
-    }
-
-    protected override void Save()
-    {
-        SaveParams(Project.Settings.UseLooseParams);
-    }
-
-    protected override void Load()
-    {
-        LoadParams();
-        UICache.ClearCaches();
     }
 
     protected override IEnumerable<StudioResource> GetDependencies(Project project)

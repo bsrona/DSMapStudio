@@ -611,9 +611,9 @@ public class FMGBank : DataBank
 
         return str;
     }
-    public static void ReloadFMGs()
+    protected override void Load()
     {
-        Locator.ActiveProject.FMGBank.LoadFMGs();
+        LoadFMGs();
     }
     public void LoadFMGs(string languageFolder = "")
     {
@@ -646,8 +646,8 @@ public class FMGBank : DataBank
                     fmgLangs.Add(lang.LanguageFolder, lang);
             }));
     }
-    
-    public void SaveFMGs()
+
+    public override void Save()
     {
         foreach (FMGLanguage lang in fmgLangs.Values)
         {
@@ -794,16 +794,6 @@ public class FMGBank : DataBank
         }
 
         return eGroup;
-    }
-
-    protected override void Save()
-    {
-        SaveFMGs();
-    }
-
-    protected override void Load()
-    {
-        LoadFMGs();
     }
 
     protected override IEnumerable<StudioResource> GetDependencies(Project project)
