@@ -1,11 +1,4 @@
-﻿using Andre.Formats;
-using Microsoft.Extensions.Logging;
-using Microsoft.Toolkit.HighPerformance.Buffers;
-using Octokit;
-using SoulsFormats;
-using StudioCore.Editor;
-using StudioCore.Platform;
-using StudioCore.TextEditor;
+﻿using SoulsFormats;
 using System;
 using System.Collections.Generic;
 using System.IO;

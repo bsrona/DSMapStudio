@@ -1,7 +1,5 @@
 ﻿using Andre.Formats;
 using Microsoft.Extensions.Logging;
-using Microsoft.Toolkit.HighPerformance.Buffers;
-using Octokit;
 using SoulsFormats;
 using StudioCore.Editor;
 using StudioCore.Platform;

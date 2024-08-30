@@ -1,17 +1,4 @@
-﻿using DotNext;
-using Microsoft.Extensions.Logging;
-using SoapstoneLib.Proto.Internal;
-using SoulsFormats;
-using StudioCore.Editor;
-using StudioCore.MsbEditor;
-using StudioCore.Platform;
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-
-namespace StudioCore;
+﻿namespace StudioCore;
 
 /// <summary>
 ///     Class that stores a collection of game data sourced from a single project

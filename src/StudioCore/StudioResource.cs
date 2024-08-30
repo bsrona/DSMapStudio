@@ -1,17 +1,5 @@
-﻿using DotNext.Collections.Generic;
-using DotNext.Threading;
-using Microsoft.Extensions.Logging;
-using SoapstoneLib.Proto.Internal;
-using SoulsFormats;
-using StudioCore.Editor;
-using StudioCore.MsbEditor;
-using StudioCore.Platform;
-using System;
-using System.Collections;
+﻿using StudioCore.Editor;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Reflection;
 
 namespace StudioCore;
 

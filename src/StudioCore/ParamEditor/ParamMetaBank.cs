@@ -1,15 +1,5 @@
-﻿using Andre.Formats;
-using Microsoft.Extensions.Logging;
-using Microsoft.Toolkit.HighPerformance.Buffers;
-using Octokit;
-using SoulsFormats;
-using StudioCore.Editor;
-using StudioCore.Platform;
-using StudioCore.TextEditor;
-using System;
+﻿using SoulsFormats;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 
 namespace StudioCore.ParamEditor;
 
