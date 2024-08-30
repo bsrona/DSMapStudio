@@ -371,7 +371,7 @@ public partial class ParamBank : DataBank
 
         // Refresh dirty cache
         UICache.ClearCaches();
-        RefreshAllParamDiffCaches(false);
+        ParamDiffBank.RefreshAllParamDiffCaches(false);
 
         return conflictingParams.Count > 0 ? ParamUpgradeResult.RowConflictsFound : ParamUpgradeResult.Success;
     }

@@ -12,13 +12,17 @@ using System.Linq;
 namespace StudioCore.ParamEditor;
 
 /// <summary>
-///     Utilities for dealing with global params for a game
+///     Utilities for dealing with global paramdiffs for a game
 /// </summary>
-public partial class ParamBank : DataBank
+public class ParamDiffBank : DataBank
 {
 
     private Dictionary<string, HashSet<int>> _primaryDiffCache; //If param != primaryparam
     private Dictionary<string, HashSet<int>> _vanillaDiffCache; //If param != vanillaparam
+
+    public ParamDiffBank(Project project) : base(project, "ParamDiffs")
+    {
+    }
 
     public IReadOnlyDictionary<string, HashSet<int>> VanillaDiffCache
     {
@@ -30,7 +34,7 @@ public partial class ParamBank : DataBank
             }
 
             {
-                if (VanillaBank == this)
+                if (Project.ParentProject == null)
                 {
                     return null;
                 }
@@ -49,7 +53,7 @@ public partial class ParamBank : DataBank
             }
 
             {
-                if (PrimaryBank == this)
+                if (Project == Locator.ActiveProject)
                 {
                     return null;
                 }
@@ -62,7 +66,7 @@ public partial class ParamBank : DataBank
     {
         _vanillaDiffCache = new Dictionary<string, HashSet<int>>();
         _primaryDiffCache = new Dictionary<string, HashSet<int>>();
-        foreach (var param in _params.Keys)
+        foreach (var param in Project.ParamBank.Params?.Keys)
         {
             _vanillaDiffCache.Add(param, new HashSet<int>());
             _primaryDiffCache.Add(param, new HashSet<int>());
@@ -71,10 +75,11 @@ public partial class ParamBank : DataBank
 
     public static void RefreshAllParamDiffCaches(bool checkAuxVanillaDiff)
     {
-        PrimaryBank.RefreshParamDiffCaches(true);
-        foreach (KeyValuePair<string, ParamBank> bank in AuxBanks)
+        Locator.ActiveProject.ParamDiffBank.RefreshParamDiffCaches(true);
+        // TODO: make auxbanks real projects
+        foreach (KeyValuePair<string, Project> aux in ResDirectory.CurrentGame.AuxProjects)
         {
-            bank.Value.RefreshParamDiffCaches(checkAuxVanillaDiff);
+            aux.Value.ParamDiffBank.RefreshParamDiffCaches(checkAuxVanillaDiff);
         }
 
         UICache.ClearCaches();
@@ -82,18 +87,18 @@ public partial class ParamBank : DataBank
 
     public void RefreshParamDiffCaches(bool checkVanillaDiff)
     {
-        if (this != VanillaBank && checkVanillaDiff)
+        if (Project.ParentProject != null && checkVanillaDiff)
         {
-            _vanillaDiffCache = GetParamDiff(VanillaBank);
+            _vanillaDiffCache = GetParamDiff(Project.ParentProject.ParamBank);
         }
 
-        if (this == VanillaBank && PrimaryBank._vanillaDiffCache != null)
+        if (Project.ParentProject == null && Locator.ActiveProject.ParamDiffBank._vanillaDiffCache != null)
         {
-            _primaryDiffCache = PrimaryBank._vanillaDiffCache;
+            _primaryDiffCache = Locator.ActiveProject.ParamDiffBank._vanillaDiffCache;
         }
-        else if (this != PrimaryBank)
+        else if (Project != Locator.ActiveProject)
         {
-            _primaryDiffCache = GetParamDiff(PrimaryBank);
+            _primaryDiffCache = GetParamDiff(Locator.ActiveProject.ParamBank);
         }
 
         UICache.ClearCaches();
@@ -107,19 +112,19 @@ public partial class ParamBank : DataBank
         }
 
         Dictionary<string, HashSet<int>> newCache = new();
-        foreach (var param in _params.Keys)
+        foreach (var param in Project.ParamBank.Params.Keys)
         {
             HashSet<int> cache = new();
             newCache.Add(param, cache);
-            Param p = _params[param];
-            if (!otherBank._params.ContainsKey(param))
+            Param p = Project.ParamBank.Params[param];
+            if (!otherBank.Params.ContainsKey(param))
             {
                 Console.WriteLine("Missing vanilla param " + param);
                 continue;
             }
 
-            Param.Row[] rows = _params[param].Rows.OrderBy(r => r.ID).ToArray();
-            Param.Row[] vrows = otherBank._params[param].Rows.OrderBy(r => r.ID).ToArray();
+            Param.Row[] rows = Project.ParamBank.Params[param].Rows.OrderBy(r => r.ID).ToArray();
+            Param.Row[] vrows = otherBank.Params[param].Rows.OrderBy(r => r.ID).ToArray();
 
             var vanillaIndex = 0;
             var lastID = -1;
@@ -182,28 +187,28 @@ public partial class ParamBank : DataBank
             return;
         }
 
-        if (VanillaBank.Params.ContainsKey(param) && VanillaDiffCache != null &&
+        if (Project.ParentProject.ParamBank.Params.ContainsKey(param) && VanillaDiffCache != null &&
             VanillaDiffCache.ContainsKey(param))
         {
-            Param.Row[] otherBankRows = VanillaBank.Params[param].Rows.Where(cell => cell.ID == row.ID).ToArray();
+            Param.Row[] otherBankRows = Project.ParentProject.ParamBank.Params[param].Rows.Where(cell => cell.ID == row.ID).ToArray();
             RefreshParamRowDiffCache(row, otherBankRows, VanillaDiffCache[param]);
         }
 
-        if (this != PrimaryBank)
+        if (Project != Locator.ActiveProject)
         {
             return;
         }
 
-        foreach (ParamBank aux in AuxBanks.Values)
+        foreach (Project aux in ResDirectory.CurrentGame.AuxProjects.Values)
         {
-            if (!aux.Params.ContainsKey(param) || aux.PrimaryDiffCache == null ||
-                !aux.PrimaryDiffCache.ContainsKey(param))
+            if (!aux.ParamBank.Params.ContainsKey(param) || aux.ParamDiffBank.PrimaryDiffCache == null ||
+                !aux.ParamDiffBank.PrimaryDiffCache.ContainsKey(param))
             {
                 continue; // Don't try for now
             }
 
-            Param.Row[] otherBankRows = aux.Params[param].Rows.Where(cell => cell.ID == row.ID).ToArray();
-            RefreshParamRowDiffCache(row, otherBankRows, aux.PrimaryDiffCache[param]);
+            Param.Row[] otherBankRows = aux.ParamBank.Params[param].Rows.Where(cell => cell.ID == row.ID).ToArray();
+            RefreshParamRowDiffCache(row, otherBankRows, aux.ParamDiffBank.PrimaryDiffCache[param]);
         }
     }
 
@@ -225,6 +230,7 @@ public partial class ParamBank : DataBank
 
         return true;
     }
+    private static readonly HashSet<int> EMPTYSET = new();
 
     public HashSet<int> GetVanillaDiffRows(string param)
     {
@@ -246,5 +252,20 @@ public partial class ParamBank : DataBank
         }
 
         return allDiffs[param];
+    }
+
+    public override void Save()
+    {
+    }
+
+    protected override void Load()
+    {
+        RefreshParamDiffCaches(true);
+        UICache.ClearCaches();
+    }
+
+    protected override IEnumerable<StudioResource> GetDependencies(Project project)
+    {    
+        return [project.ParamBank, project.ParentProject.ParamBank];
     }
 }

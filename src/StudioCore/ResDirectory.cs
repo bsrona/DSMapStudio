@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity.Data;
+﻿using System.Collections.Generic;
+using Microsoft.AspNetCore.Identity.Data;
 using SoulsFormats;
 using StudioCore.Editor;
 using StudioCore.ParamEditor;
@@ -16,6 +17,8 @@ namespace StudioCore;
 public class ResDirectory
 {
     public static ResDirectory CurrentGame { get; set; } = new();
+
+    public Dictionary<string, Project> AuxProjects = new();
 
     public ParamDefBank ParamDefBank = new();
     public ParamMetaBank ParamMetaBank = new();

@@ -18,12 +18,9 @@ public partial class ParamBank : DataBank
 {
     public static ParamBank PrimaryBank => Locator.ActiveProject.ParamBank;
     public static ParamBank VanillaBank => Locator.ActiveProject.ParentProject.ParamBank;
-    public static Dictionary<string, ParamBank> AuxBanks = new();
 
     public static string ClipboardParam = null;
     public static List<Param.Row> ClipboardRows = new();
-
-    private static readonly HashSet<int> EMPTYSET = new();
 
     private Dictionary<string, Param> _params;
 
@@ -533,10 +530,10 @@ public partial class ParamBank : DataBank
             LoadParamsAC6();
         }
 
-        ClearParamDiffCaches();
         UICache.ClearCaches();
     }
 
+    // TODO: Repair on-load actions
     //Some returns and repetition, but it keeps all threading and loading-flags visible inside this method
     /*public static void ReloadParams(ProjectSettings settings, NewProjectOptions options)
     {
@@ -583,14 +580,9 @@ public partial class ParamBank : DataBank
 
     public static void LoadAuxBank(string dir, ProjectSettings settings = null)
     {
-        // skip the meme and just treat as project
         Project siblingVirtualProject = new Project(dir, Locator.ActiveProject.ParentProject, settings);
-        ParamBank newBank = siblingVirtualProject.ParamBank;
-
-        newBank.Load();
-
-        newBank.RefreshParamDiffCaches(true);
-        AuxBanks[Path.GetFileName(dir).Replace(' ', '_')] = newBank;
+        StudioResource.Load(siblingVirtualProject, [siblingVirtualProject.ParamBank, siblingVirtualProject.ParamDiffBank]);
+        ResDirectory.CurrentGame.AuxProjects[Path.GetFileName(siblingVirtualProject.AssetLocator.RootDirectory).Replace(' ', '_')] = siblingVirtualProject;
     }
 
     private void SaveParamsDS1()

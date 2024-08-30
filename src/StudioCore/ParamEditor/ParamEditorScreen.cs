@@ -358,7 +358,7 @@ public class ParamEditorScreen : EditorScreen
                 }
 
                 if (ImGui.BeginMenu("Modified rows",
-                        ParamBank.PrimaryBank.GetVanillaDiffRows(_activeView._selection.GetActiveParam()).Any()))
+                        Locator.ActiveProject.ParamDiffBank.GetVanillaDiffRows(_activeView._selection.GetActiveParam()).Any()))
                 {
                     CsvExportDisplay(RowGetType.ModifiedRows);
                     ImGui.EndMenu();
@@ -441,7 +441,7 @@ public class ParamEditorScreen : EditorScreen
                                 TaskManager.Run(new TaskManager.LiveTask("Param - Check Differences",
                                     TaskManager.RequeueType.Repeat, true,
                                     TaskLogs.LogPriority.Low,
-                                    () => ParamBank.RefreshAllParamDiffCaches(false)));
+                                    () => ParamDiffBank.RefreshAllParamDiffCaches(false)));
                             }
                             else
                             {
@@ -469,7 +469,7 @@ public class ParamEditorScreen : EditorScreen
                             TaskManager.Run(new TaskManager.LiveTask("Param - Check Differences",
                                 TaskManager.RequeueType.Repeat,
                                 true, TaskLogs.LogPriority.Low,
-                                () => ParamBank.RefreshAllParamDiffCaches(false)));
+                                () => ParamDiffBank.RefreshAllParamDiffCaches(false)));
                         }
                     }
 
@@ -498,7 +498,7 @@ public class ParamEditorScreen : EditorScreen
                                     TaskManager.Run(new TaskManager.LiveTask("Param - Check Differences",
                                         TaskManager.RequeueType.Repeat,
                                         true, TaskLogs.LogPriority.Low,
-                                        () => ParamBank.RefreshAllParamDiffCaches(false)));
+                                        () => ParamDiffBank.RefreshAllParamDiffCaches(false)));
                                 }
                             }
                         }
@@ -598,7 +598,7 @@ public class ParamEditorScreen : EditorScreen
             if (ImGui.MenuItem("Check all params for edits", null, false,
                     ParamBank.PrimaryBank.IsLoaded && ParamBank.VanillaBank.IsLoaded))
             {
-                ParamBank.RefreshAllParamDiffCaches(true);
+                ParamDiffBank.RefreshAllParamDiffCaches(true);
             }
 
             ImGui.Separator();
@@ -742,14 +742,14 @@ public class ParamEditorScreen : EditorScreen
                 }
             }
 
-            if (ImGui.BeginMenu("Clear param comparison...", ParamBank.AuxBanks.Count > 0))
+            if (ImGui.BeginMenu("Clear param comparison...", ResDirectory.CurrentGame.AuxProjects.Count > 0))
             {
-                for (var i = 0; i < ParamBank.AuxBanks.Count; i++)
+                for (var i = 0; i < ResDirectory.CurrentGame.AuxProjects.Count; i++)
                 {
-                    KeyValuePair<string, ParamBank> pb = ParamBank.AuxBanks.ElementAt(i);
+                    KeyValuePair<string, Project> pb = ResDirectory.CurrentGame.AuxProjects.ElementAt(i);
                     if (ImGui.MenuItem(pb.Key))
                     {
-                        ParamBank.AuxBanks.Remove(pb.Key);
+                        ResDirectory.CurrentGame.AuxProjects.Remove(pb.Key);
                         break;
                     }
                 }
@@ -757,9 +757,10 @@ public class ParamEditorScreen : EditorScreen
                 ImGui.EndMenu();
             }
 
-            if (ImGui.MenuItem("Clear all param comparisons", null, false, ParamBank.AuxBanks.Count > 0))
+            if (ImGui.MenuItem("Clear all param comparisons", null, false, ResDirectory.CurrentGame.AuxProjects.Count > 0))
             {
-                ParamBank.AuxBanks = new Dictionary<string, ParamBank>();
+                // TODO look into whether it's sensible for parambank to control auxprojects like this
+                ResDirectory.CurrentGame.AuxProjects = new Dictionary<string, Project>();
             }
 
             ImGui.EndMenu();
@@ -1420,7 +1421,7 @@ public class ParamEditorScreen : EditorScreen
                 }
 
                 UICache.ClearCaches();
-                ParamBank.RefreshAllParamDiffCaches(false);
+                ParamDiffBank.RefreshAllParamDiffCaches(false);
             }
 
 
@@ -1489,7 +1490,7 @@ public class ParamEditorScreen : EditorScreen
         TaskManager.Run(new TaskManager.LiveTask("Param - Check Differences",
             TaskManager.RequeueType.Repeat, true,
             TaskLogs.LogPriority.Low,
-            () => ParamBank.RefreshAllParamDiffCaches(false)));
+            () => ParamDiffBank.RefreshAllParamDiffCaches(false)));
     }
 
     private void ParamRedo()
@@ -1498,7 +1499,7 @@ public class ParamEditorScreen : EditorScreen
         TaskManager.Run(new TaskManager.LiveTask("Param - Check Differences",
             TaskManager.RequeueType.Repeat, true,
             TaskLogs.LogPriority.Low,
-            () => ParamBank.RefreshAllParamDiffCaches(false)));
+            () => ParamDiffBank.RefreshAllParamDiffCaches(false)));
     }
 
     private IReadOnlyList<Param.Row> CsvExportGetRows(RowGetType rowType)
@@ -1514,7 +1515,7 @@ public class ParamEditorScreen : EditorScreen
         else if (rowType == RowGetType.ModifiedRows)
         {
             // Modified rows
-            HashSet<int> vanillaDiffCache = ParamBank.PrimaryBank.GetVanillaDiffRows(activeParam);
+            HashSet<int> vanillaDiffCache = Locator.ActiveProject.ParamDiffBank.GetVanillaDiffRows(activeParam);
             rows = ParamBank.PrimaryBank.Params[activeParam].Rows.Where(p => vanillaDiffCache.Contains(p.ID))
                 .ToList();
         }
@@ -1750,7 +1751,7 @@ public class ParamEditorScreen : EditorScreen
                     TaskManager.Run(new TaskManager.LiveTask("Param - Check Differences",
                         TaskManager.RequeueType.Repeat,
                         true, TaskLogs.LogPriority.Low,
-                        () => ParamBank.RefreshAllParamDiffCaches(false)));
+                        () => ParamDiffBank.RefreshAllParamDiffCaches(false)));
                 }
 
                 _mEditRegexResult = r.Information;
@@ -1816,7 +1817,7 @@ public class ParamEditorScreen : EditorScreen
                     TaskManager.Run(new TaskManager.LiveTask("Param - Check Differences",
                         TaskManager.RequeueType.Repeat, true,
                         TaskLogs.LogPriority.Low,
-                        () => ParamBank.RefreshAllParamDiffCaches(false)));
+                        () => ParamDiffBank.RefreshAllParamDiffCaches(false)));
                 }
 
                 _mEditCSVResult = result;
