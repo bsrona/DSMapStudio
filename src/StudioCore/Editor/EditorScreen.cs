@@ -87,24 +87,11 @@ public interface EditorScreen
 
     public bool IsEnabled(Project project)
     {
-        foreach (StudioResource res in GetDependencies(project))
-        {
-            if (!res.IsLoaded)
-                return false;
-        }
-        return true;
+        return StudioResource.AreResourcesLoaded(GetDependencies(project));
     }
     public void Load(Project project)
     {
-        foreach (StudioResource res in GetDependencies(project))
-        {
-            if (!res.IsLoaded)
-            {
-                TaskManager.Run(new TaskManager.LiveTask(res.GetTaskName(), TaskManager.RequeueType.None, true, () => {
-                    res.Load(project);
-                }));
-            }
-        }
+        StudioResource.Load(project, GetDependencies(project));
     }
 
     protected abstract IEnumerable<StudioResource> GetDependencies(Project project);

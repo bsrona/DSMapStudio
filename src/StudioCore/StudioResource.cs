@@ -62,4 +62,26 @@ public abstract class StudioResource
     }
     protected abstract void Load();
     protected abstract IEnumerable<StudioResource> GetDependencies(Project project);
+
+    public static bool AreResourcesLoaded(IEnumerable<StudioResource> res)
+    {
+        foreach (StudioResource r in res)
+        {
+            if (!r.IsLoaded)
+                return false;
+        }
+        return true;
+    }
+    public static void Load(Project project, IEnumerable<StudioResource> resources)
+    {
+        foreach (StudioResource res in resources)
+        {
+            if (!res.IsLoaded)
+            {
+                TaskManager.Run(new TaskManager.LiveTask(res.GetTaskName(), TaskManager.RequeueType.None, true, () => {
+                    res.Load(project);
+                }));
+            }
+        }
+    }
 }
