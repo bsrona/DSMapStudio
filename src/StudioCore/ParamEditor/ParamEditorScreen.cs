@@ -2121,6 +2121,6 @@ public class ParamEditorScreen : EditorScreen
 
     IEnumerable<StudioResource> EditorScreen.GetDependencies(Project project)
     {
-        return [project.ParamBank, project.ParentProject.ParamBank, ResDirectory.CurrentGame.ParamMetaBank];
+        return [project.ParamBank, project.ParentProject.ParamBank, project.ParamDiffBank, ResDirectory.CurrentGame.ParamMetaBank];
     }
 }

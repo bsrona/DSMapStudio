@@ -33,11 +33,9 @@ public class ParamDiffBank : DataBank
                 return null;
             }
 
+            if (Project.ParentProject == null)
             {
-                if (Project.ParentProject == null)
-                {
-                    return null;
-                }
+                return null;
             }
             return _vanillaDiffCache;
         }
@@ -52,17 +50,15 @@ public class ParamDiffBank : DataBank
                 return null;
             }
 
+            if (Project == Locator.ActiveProject)
             {
-                if (Project == Locator.ActiveProject)
-                {
-                    return null;
-                }
+                return null;
             }
             return _primaryDiffCache;
         }
     }
 
-    public void ClearParamDiffCaches()
+    private void ClearParamDiffCaches()
     {
         _vanillaDiffCache = new Dictionary<string, HashSet<int>>();
         _primaryDiffCache = new Dictionary<string, HashSet<int>>();
@@ -76,7 +72,6 @@ public class ParamDiffBank : DataBank
     public static void RefreshAllParamDiffCaches(bool checkAuxVanillaDiff)
     {
         Locator.ActiveProject.ParamDiffBank.RefreshParamDiffCaches(true);
-        // TODO: make auxbanks real projects
         foreach (KeyValuePair<string, Project> aux in ResDirectory.CurrentGame.AuxProjects)
         {
             aux.Value.ParamDiffBank.RefreshParamDiffCaches(checkAuxVanillaDiff);
@@ -106,7 +101,7 @@ public class ParamDiffBank : DataBank
 
     private Dictionary<string, HashSet<int>> GetParamDiff(ParamBank otherBank)
     {
-        if (IsLoading || otherBank == null || otherBank.IsLoading)
+        if (otherBank == null || otherBank.IsLoading)
         {
             return null;
         }
