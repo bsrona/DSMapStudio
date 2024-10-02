@@ -366,4 +366,12 @@ public class ModelEditorScreen : EditorScreen, AssetBrowserEventHandler, SceneTr
     {
         return [];
     }
+
+    public void SettingsMenu()
+    {
+        if (ImGui.CollapsingHeader("General", ImGuiTreeNodeFlags.DefaultOpen))
+        {
+            //Nothing here
+        }
+    }
 }

@@ -2123,4 +2123,58 @@ public class ParamEditorScreen : EditorScreen
     {
         return [project.ParamBank, project.ParentProject.ParamBank, project.ParamDiffBank, ResDirectory.CurrentGame.ParamMetaBank];
     }
+
+    public void SettingsMenu()
+    {
+        if (ImGui.CollapsingHeader("General", ImGuiTreeNodeFlags.DefaultOpen))
+        {
+            EditorDecorations.ShowHelpMarker("Reduces the line height within the the Param Editor screen.");
+            ImGui.Checkbox("Use compact param editor", ref CFG.Current.UI_CompactParams);
+
+            EditorDecorations.ShowHelpMarker("Show additional options within the MassEdit context menu.");
+            ImGui.Checkbox("Show advanced massedit options", ref CFG.Current.Param_AdvancedMassedit);
+
+            EditorDecorations.ShowHelpMarker("Show the shortcut tools in the right-click context menu.");
+            ImGui.Checkbox("Show shortcut tools in context menus", ref CFG.Current.Param_ShowHotkeysInContextMenu);
+        }
+
+        if (ImGui.CollapsingHeader("Params"))
+        {
+            EditorDecorations.ShowHelpMarker("Sort the Param View list alphabetically.");
+            if (ImGui.Checkbox("Sort params alphabetically", ref CFG.Current.Param_AlphabeticalParams))
+            {
+                UICache.ClearCaches();
+            }
+        }
+
+        if (ImGui.CollapsingHeader("Rows"))
+        {
+            EditorDecorations.ShowHelpMarker("Disable the row names from wrapping within the Row View list.");
+            ImGui.Checkbox("Disable line wrapping", ref CFG.Current.Param_DisableLineWrapping);
+
+            EditorDecorations.ShowHelpMarker("Disable the grouping of connected rows in certain params, such as ItemLotParam within the Row View list.");
+            ImGui.Checkbox("Disable row grouping", ref CFG.Current.Param_DisableRowGrouping);
+        }
+
+        if (ImGui.CollapsingHeader("Fields"))
+        {
+            EditorDecorations.ShowHelpMarker("Crowd-sourced names will appear before the canonical name in the Field View list.");
+            ImGui.Checkbox("Show community field names first", ref CFG.Current.Param_MakeMetaNamesPrimary);
+
+            EditorDecorations.ShowHelpMarker("The crowd-sourced name (or the canonical name if the above option is enabled) will appear after the initial name in the Field View list.");
+            ImGui.Checkbox("Show secondary field names", ref CFG.Current.Param_ShowSecondaryNames);
+
+            EditorDecorations.ShowHelpMarker("The field offset within the .PARAM file will be show to the left in the Field View List.");
+            ImGui.Checkbox("Show field data offsets", ref CFG.Current.Param_ShowFieldOffsets);
+
+            EditorDecorations.ShowHelpMarker("Hide the generated param references for fields that link to other params.");
+            ImGui.Checkbox("Hide field references", ref CFG.Current.Param_HideReferenceRows);
+
+            EditorDecorations.ShowHelpMarker("Hide the crowd-sourced namelist for index-based enum fields.");
+            ImGui.Checkbox("Hide field enums", ref CFG.Current.Param_HideEnums);
+
+            EditorDecorations.ShowHelpMarker("Allow the field order to be changed by an alternative order as defined within the Paramdex META file.");
+            ImGui.Checkbox("Allow field reordering", ref CFG.Current.Param_AllowFieldReorder);
+        }
+    }
 }

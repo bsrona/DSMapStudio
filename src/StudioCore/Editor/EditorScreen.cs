@@ -95,4 +95,6 @@ public interface EditorScreen
     }
 
     protected abstract IEnumerable<StudioResource> GetDependencies(Project project);
+
+    public abstract void SettingsMenu();
 }

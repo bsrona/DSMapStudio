@@ -28,6 +28,23 @@ public unsafe class EditorDecorations
 
         return UIHints.AddImGuiHintButton(id, ref hint, canEdit, true); //presently a hack, move code here
     }
+    // A second one with brackets and hover instead
+    public static void ShowHelpMarker(string desc)
+    {
+        if (CFG.Current.ShowUITooltips)
+        {
+            ImGui.TextDisabled("(?)");
+            if (ImGui.IsItemHovered(0))
+            {
+                ImGui.BeginTooltip();
+                ImGui.PushTextWrapPos(450.0f);
+                ImGui.TextUnformatted(desc);
+                ImGui.PopTextWrapPos();
+                ImGui.EndTooltip();
+            }
+            ImGui.SameLine();
+        }
+    }
 
     public static void ParamRefText(List<ParamRef> paramRefs, Param.Row context)
     {
@@ -960,23 +977,6 @@ public unsafe class EditorDecorations
         {
             ImGui.Text($"{desc}");
             ImGui.EndPopup();
-        }
-    }
-
-    public static void ShowHelpMarker(string desc)
-    {
-        if (CFG.Current.ShowUITooltips)
-        {
-            ImGui.SameLine();
-            ImGui.TextDisabled("(?)");
-            if (ImGui.IsItemHovered(0))
-            {
-                ImGui.BeginTooltip();
-                ImGui.PushTextWrapPos(450.0f);
-                ImGui.TextUnformatted(desc);
-                ImGui.PopTextWrapPos();
-                ImGui.EndTooltip();
-            }
         }
     }
 

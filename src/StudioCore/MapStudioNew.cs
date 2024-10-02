@@ -1032,7 +1032,7 @@ public class MapStudioNew
             ImGui.EndMainMenuBar();
         }
 
-        _settingsMenu.Display();
+        _settingsMenu.Display(_editors);
         HelpWindow.Display();
 
         ImGui.PopStyleVar(1);
