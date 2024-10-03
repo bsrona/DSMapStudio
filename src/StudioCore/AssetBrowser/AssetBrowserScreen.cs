@@ -15,9 +15,8 @@ using System.Linq;
 using System.Numerics;
 using System.Threading;
 using static Andre.Native.ImGuiBindings;
-using Action = StudioCore.MsbEditor.Action;
-using ActionManager = StudioCore.MsbEditor.ActionManager;
-using CompoundAction = StudioCore.MsbEditor.CompoundAction;
+using ActionManager = StudioCore.Editor.ActionManager;
+using CompoundAction = StudioCore.Editor.CompoundAction;
 namespace StudioCore.Editors.AssetBrowser;
 
 public enum AssetBrowserSource
@@ -657,7 +656,7 @@ public class AssetBrowserScreen
 
     public void SetObjectModelForSelection(string modelName, AssetCategoryType assetType, string assetMapId)
     {
-        var actlist = new List<Action>();
+        var actlist = new List<EditorAction>();
 
         var selected = _selection.GetFilteredSelection<Entity>();
 

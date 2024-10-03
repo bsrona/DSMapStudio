@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using SoulsFormats;
+using StudioCore.Editor;
 using StudioCore.Scene;
 using StudioCore.Utilities;
 using System;
@@ -11,142 +12,9 @@ using System.Text.RegularExpressions;
 namespace StudioCore.MsbEditor;
 
 /// <summary>
-///     An action that can be performed by the user in the editor that represents
-///     a single atomic editor action that affects the state of the map. Each action
-///     should have enough information to apply the action AND undo the action, as
-///     these actions get pushed to a stack for undo/redo
-/// </summary>
-public abstract class Action
-{
-    public abstract ActionEvent Execute();
-    public abstract ActionEvent Undo();
-}
-
-public class PropertiesChangedAction : Action
-{
-    private readonly object ChangedObject;
-    private readonly List<PropertyChange> Changes = new();
-    private Action<bool> PostExecutionAction;
-
-    public PropertiesChangedAction(object changed)
-    {
-        ChangedObject = changed;
-    }
-
-    public PropertiesChangedAction(PropertyInfo prop, object changed, object newval)
-    {
-        ChangedObject = changed;
-        var change = new PropertyChange();
-        change.Property = prop;
-        change.OldValue = prop.GetValue(ChangedObject);
-        change.NewValue = newval;
-        change.ArrayIndex = -1;
-        Changes.Add(change);
-    }
-
-    public PropertiesChangedAction(PropertyInfo prop, int index, object changed, object newval)
-    {
-        ChangedObject = changed;
-        var change = new PropertyChange();
-        change.Property = prop;
-        if (index != -1 && prop.PropertyType.IsArray)
-        {
-            var a = (Array)change.Property.GetValue(ChangedObject);
-            change.OldValue = a.GetValue(index);
-        }
-        else
-        {
-            change.OldValue = prop.GetValue(ChangedObject);
-        }
-
-        change.NewValue = newval;
-        change.ArrayIndex = index;
-        Changes.Add(change);
-    }
-
-    public void AddPropertyChange(PropertyInfo prop, object newval, int index = -1)
-    {
-        var change = new PropertyChange();
-        change.Property = prop;
-        if (index != -1 && prop.PropertyType.IsArray)
-        {
-            var a = (Array)change.Property.GetValue(ChangedObject);
-            change.OldValue = a.GetValue(index);
-        }
-        else
-        {
-            change.OldValue = prop.GetValue(ChangedObject);
-        }
-
-        change.NewValue = newval;
-        change.ArrayIndex = index;
-        Changes.Add(change);
-    }
-
-    public void SetPostExecutionAction(Action<bool> action)
-    {
-        PostExecutionAction = action;
-    }
-
-    public override ActionEvent Execute()
-    {
-        foreach (PropertyChange change in Changes)
-        {
-            if (change.Property.PropertyType.IsArray && change.ArrayIndex != -1)
-            {
-                var a = (Array)change.Property.GetValue(ChangedObject);
-                a.SetValue(change.NewValue, change.ArrayIndex);
-            }
-            else
-            {
-                change.Property.SetValue(ChangedObject, change.NewValue);
-            }
-        }
-
-        if (PostExecutionAction != null)
-        {
-            PostExecutionAction.Invoke(false);
-        }
-
-        return ActionEvent.NoEvent;
-    }
-
-    public override ActionEvent Undo()
-    {
-        foreach (PropertyChange change in Changes)
-        {
-            if (change.Property.PropertyType.IsArray && change.ArrayIndex != -1)
-            {
-                var a = (Array)change.Property.GetValue(ChangedObject);
-                a.SetValue(change.OldValue, change.ArrayIndex);
-            }
-            else
-            {
-                change.Property.SetValue(ChangedObject, change.OldValue);
-            }
-        }
-
-        if (PostExecutionAction != null)
-        {
-            PostExecutionAction.Invoke(true);
-        }
-
-        return ActionEvent.NoEvent;
-    }
-
-    private class PropertyChange
-    {
-        public int ArrayIndex;
-        public object NewValue;
-        public object OldValue;
-        public PropertyInfo Property;
-    }
-}
-
-/// <summary>
 ///     Copies values from one array to another without affecting references.
 /// </summary>
-public class ArrayPropertyCopyAction : Action
+public class ArrayPropertyCopyAction : EditorAction
 {
     private readonly List<PropertyChange> Changes = new();
     private Action<bool> PostExecutionAction;
@@ -222,7 +90,7 @@ public class ArrayPropertyCopyAction : Action
     }
 }
 
-public class MultipleEntityPropertyChangeAction : Action
+public class MultipleEntityPropertyChangeAction : EditorAction
 {
     private readonly HashSet<Entity> ChangedEnts = new();
     private readonly List<PropertyChange> Changes = new();
@@ -322,7 +190,7 @@ public class MultipleEntityPropertyChangeAction : Action
     }
 }
 
-public class CloneMapObjectsAction : Action
+public class CloneMapObjectsAction : EditorAction
 {
     private static readonly Regex TrailIDRegex = new(@"_(?<id>\d+)$");
     private readonly List<MapEntity> Clonables = new();
@@ -546,7 +414,7 @@ public class CloneMapObjectsAction : Action
     }
 }
 
-public class AddMapObjectsAction : Action
+public class AddMapObjectsAction : EditorAction
 {
     private static Regex TrailIDRegex = new(@"_(?<id>\d+)$");
     private readonly List<MapEntity> Added = new();
@@ -635,81 +503,7 @@ public class AddMapObjectsAction : Action
     }
 }
 
-/// <summary>
-///     Deprecated
-/// </summary>
-[Obsolete]
-public class AddParamsAction : Action
-{
-    private readonly List<PARAM.Row> Clonables = new();
-    private readonly List<PARAM.Row> Clones = new();
-    private readonly PARAM Param;
-    private readonly bool SetSelection;
-    private string ParamString;
-
-    public AddParamsAction(PARAM param, string pstring, List<PARAM.Row> rows, bool setsel)
-    {
-        Param = param;
-        Clonables.AddRange(rows);
-        ParamString = pstring;
-        SetSelection = setsel;
-    }
-
-    public override ActionEvent Execute()
-    {
-        foreach (PARAM.Row row in Clonables)
-        {
-            var newrow = new PARAM.Row(row);
-            if (Param[row.ID] == null)
-            {
-                newrow.Name = row.Name != null ? row.Name : "";
-                var index = 0;
-                foreach (PARAM.Row r in Param.Rows)
-                {
-                    if (r.ID > newrow.ID)
-                    {
-                        break;
-                    }
-
-                    index++;
-                }
-
-                Param.Rows.Insert(index, newrow);
-            }
-            else
-            {
-                newrow.Name = row.Name != null ? row.Name + "_1" : "";
-                Param.Rows.Insert(Param.Rows.IndexOf(Param[row.ID]) + 1, newrow);
-            }
-
-            Clones.Add(newrow);
-        }
-
-        if (SetSelection)
-        {
-            // EditorCommandQueue.AddCommand($@"param/select/{ParamString}/{Clones[0].ID}");
-        }
-
-        return ActionEvent.NoEvent;
-    }
-
-    public override ActionEvent Undo()
-    {
-        for (var i = 0; i < Clones.Count(); i++)
-        {
-            Param.Rows.Remove(Clones[i]);
-        }
-
-        Clones.Clear();
-        if (SetSelection)
-        {
-        }
-
-        return ActionEvent.NoEvent;
-    }
-}
-
-public class DeleteMapObjectsAction : Action
+public class DeleteMapObjectsAction : EditorAction
 {
     private readonly List<MapEntity> Deletables = new();
     private readonly List<int> RemoveIndices = new();
@@ -807,54 +601,7 @@ public class DeleteMapObjectsAction : Action
     }
 }
 
-/// <summary>
-///     Deprecated
-/// </summary>
-[Obsolete]
-public class DeleteParamsAction : Action
-{
-    private readonly List<PARAM.Row> Deletables = new();
-    private readonly PARAM Param;
-    private readonly List<int> RemoveIndices = new();
-    private readonly bool SetSelection = false;
-
-    public DeleteParamsAction(PARAM param, List<PARAM.Row> rows)
-    {
-        Param = param;
-        Deletables.AddRange(rows);
-    }
-
-    public override ActionEvent Execute()
-    {
-        foreach (PARAM.Row row in Deletables)
-        {
-            RemoveIndices.Add(Param.Rows.IndexOf(row));
-            Param.Rows.RemoveAt(RemoveIndices.Last());
-        }
-
-        if (SetSelection)
-        {
-        }
-
-        return ActionEvent.NoEvent;
-    }
-
-    public override ActionEvent Undo()
-    {
-        for (var i = 0; i < Deletables.Count(); i++)
-        {
-            Param.Rows.Insert(RemoveIndices[i], Deletables[i]);
-        }
-
-        if (SetSelection)
-        {
-        }
-
-        return ActionEvent.NoEvent;
-    }
-}
-
-public class ReorderContainerObjectsAction : Action
+public class ReorderContainerObjectsAction : EditorAction
 {
     private readonly List<ObjectContainer> Containers = new();
     private readonly bool SetSelection;
@@ -992,7 +739,7 @@ public class ReorderContainerObjectsAction : Action
     }
 }
 
-public class ChangeEntityHierarchyAction : Action
+public class ChangeEntityHierarchyAction : EditorAction
 {
     private readonly bool SetSelection;
     private readonly List<Entity> SourceObjects = new();
@@ -1133,7 +880,7 @@ public class ChangeEntityHierarchyAction : Action
     }
 }
 
-public class ChangeMapObjectType : Action
+public class ChangeMapObjectType : EditorAction
 {
     private readonly List<MapEntity> Entities = new();
     private readonly List<MapObjectChange> MapObjectChanges = new();
@@ -1244,59 +991,4 @@ public class ChangeMapObjectType : Action
     }
 
     private record MapObjectChange(object OldObject, object NewObject, MapEntity Entity);
-}
-
-public class CompoundAction : Action
-{
-    private readonly List<Action> Actions;
-
-    private Action<bool> PostExecutionAction;
-
-    public CompoundAction(List<Action> actions)
-    {
-        Actions = actions;
-    }
-
-    public void SetPostExecutionAction(Action<bool> action)
-    {
-        PostExecutionAction = action;
-    }
-
-    public override ActionEvent Execute()
-    {
-        var evt = ActionEvent.NoEvent;
-        foreach (Action act in Actions)
-        {
-            if (act != null)
-            {
-                evt |= act.Execute();
-            }
-        }
-
-        if (PostExecutionAction != null)
-        {
-            PostExecutionAction.Invoke(false);
-        }
-
-        return evt;
-    }
-
-    public override ActionEvent Undo()
-    {
-        var evt = ActionEvent.NoEvent;
-        foreach (Action act in Actions)
-        {
-            if (act != null)
-            {
-                evt |= act.Undo();
-            }
-        }
-
-        if (PostExecutionAction != null)
-        {
-            PostExecutionAction.Invoke(true);
-        }
-
-        return evt;
-    }
 }

@@ -1,5 +1,6 @@
 ﻿using static Andre.Native.ImGuiBindings;
 using StudioCore.DebugPrimitives;
+using StudioCore.Editor;
 using StudioCore.MsbEditor;
 using StudioCore.Resource;
 using StudioCore.Scene;

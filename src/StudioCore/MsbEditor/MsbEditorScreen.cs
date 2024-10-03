@@ -1382,7 +1382,7 @@ public class MsbEditorScreen : EditorScreen, SceneTreeEventHandler
 
     public void SetObjectModelForSelection(string modelName, string assetType, string assetMapId)
     {
-        var actlist = new List<Action>();
+        var actlist = new List<EditorAction>();
 
         var selected = _selection.GetFilteredSelection<Entity>();
 
@@ -1620,7 +1620,7 @@ public class MsbEditorScreen : EditorScreen, SceneTreeEventHandler
     /// </summary>
     private void ResetRotationSelection()
     {
-        List<Action> actlist = new();
+        List<EditorAction> actlist = new();
 
         HashSet<Entity> selected = _selection.GetFilteredSelection<Entity>(o => o.HasTransform);
         foreach (Entity s in selected)
@@ -1648,7 +1648,7 @@ public class MsbEditorScreen : EditorScreen, SceneTreeEventHandler
     /// </summary>
     private void ArbitraryRotation_Selection(Vector3 axis, bool pivot)
     {
-        List<Action> actlist = new();
+        List<EditorAction> actlist = new();
         HashSet<Entity> sels = _selection.GetFilteredSelection<Entity>(o => o.HasTransform);
 
         // Get the center position of the selections
@@ -1709,7 +1709,7 @@ public class MsbEditorScreen : EditorScreen, SceneTreeEventHandler
     /// </summary>
     private void MoveSelectionToCamera()
     {
-        List<Action> actlist = new();
+        List<EditorAction> actlist = new();
         HashSet<Entity> sels = _selection.GetFilteredSelection<Entity>(o => o.HasTransform);
 
         Vector3 camDir = Vector3.Transform(Vector3.UnitZ, Viewport.WorldView.CameraTransform.RotationMatrix);

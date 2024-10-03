@@ -1,4 +1,5 @@
 ﻿using static Andre.Native.ImGuiBindings;
+using StudioCore.Editor;
 using StudioCore.MsbEditor;
 using System.Numerics;
 using Veldrid;
