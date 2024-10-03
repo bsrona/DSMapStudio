@@ -42,7 +42,8 @@ public abstract class StudioResource
             }
             foreach (TaskManager.LiveTask t in tasks)
             {
-                t.Task.Wait();
+                if (!t.Task.IsCompleted)
+                    t.Task.Wait();
             }
             Load();
             IsLoaded = true;
