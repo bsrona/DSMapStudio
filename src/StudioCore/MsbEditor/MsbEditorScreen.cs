@@ -2112,7 +2112,9 @@ public class MsbEditorScreen : EditorScreen, SceneTreeEventHandler
 
     IEnumerable<StudioResource> EditorScreen.GetDependencies(Project project)
     {
-        return [];
+        if (project.Type == GameType.DarkSoulsIISOTFS)
+            return [project.ParamBank, project.MSBBank];
+        return [project.MSBBank];
     }
 
     public void SettingsMenu()
