@@ -15,6 +15,8 @@ namespace StudioCore.MsbEditor;
 ///     High level class that stores a single map (msb) and can serialize/
 ///     deserialize it. This is the logical portion of the map and does not
 ///     handle tasks like rendering or loading associated assets with it.
+///
+///     CURRENTLY ALSO USED TO HOLD A FLVER???
 /// </summary>
 public class ObjectContainer
 {

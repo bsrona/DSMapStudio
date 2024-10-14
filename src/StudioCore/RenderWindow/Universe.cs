@@ -731,7 +731,7 @@ public class Universe
                 //break;
             }
 
-            IMsb msb = Locator.ActiveProject.MSBBank.GetMsb(Locator.ActiveProject.Type, mapid);
+            IMsb msb = Locator.ActiveProject.MSBBank.GetMsb(mapid);
             if (msb == null)
                 return;
             map.LoadMSB(msb);

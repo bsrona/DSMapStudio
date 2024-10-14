@@ -17,7 +17,7 @@ public class MSBBank : DataBank
     /// <summary>
     ///     List of msb names
     /// </summary>
-    private List<string> _msbIDs = new();
+    private List<string> _msbIDs = null;
 
     /// <summary>
     ///     Mapping from msb path|name -> IMsb.
@@ -44,7 +44,7 @@ public class MSBBank : DataBank
         return [];
     }
 
-    public IMsb GetMsb(GameType type, string mapId)
+    public IMsb GetMsb(string mapId)
     {
         if (_msbs.TryGetValue(mapId, out IMsb msb))
         {
@@ -58,31 +58,31 @@ public class MSBBank : DataBank
         }
         string path = ad.AssetPath;
 
-        if (type == GameType.DarkSoulsIII)
+        if (Project.Type == GameType.DarkSoulsIII)
         {
             msb = MSB3.Read(path);
         }
-        else if (type == GameType.Sekiro)
+        else if (Project.Type == GameType.Sekiro)
         {
             msb = MSBS.Read(path);
         }
-        else if (type == GameType.EldenRing)
+        else if (Project.Type == GameType.EldenRing)
         {
             msb = MSBE.Read(path);
         }
-        else if (type == GameType.ArmoredCoreVI)
+        else if (Project.Type == GameType.ArmoredCoreVI)
         {
             msb = MSB_AC6.Read(path);
         }
-        else if (type == GameType.DarkSoulsIISOTFS)
+        else if (Project.Type == GameType.DarkSoulsIISOTFS)
         {
             msb = MSB2.Read(path);
         }
-        else if (type == GameType.Bloodborne)
+        else if (Project.Type == GameType.Bloodborne)
         {
             msb = MSBB.Read(path);
         }
-        else if (type == GameType.DemonsSouls)
+        else if (Project.Type == GameType.DemonsSouls)
         {
             msb = MSBD.Read(path);
         }
