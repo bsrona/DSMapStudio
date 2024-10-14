@@ -156,7 +156,7 @@ public class AssetBrowserScreen
                 }
             }
 
-            List<string> mapList = Locator.AssetLocator.GetFullMapList();
+            List<string> mapList = Locator.ActiveProject.MSBBank.GetFullMapList();
 
             foreach (var mapId in mapList)
             {

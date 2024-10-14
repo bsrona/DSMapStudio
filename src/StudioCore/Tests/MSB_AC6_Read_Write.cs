@@ -8,7 +8,7 @@ public static class MSB_AC6_Read_Write
 {
     public static bool Run(AssetLocator locator)
     {
-        List<string> msbs = locator.GetFullMapList();
+        List<string> msbs = Locator.ActiveProject.MSBBank.GetFullMapList();
 
         // m00_90_00_00
 

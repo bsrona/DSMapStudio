@@ -615,7 +615,7 @@ public class Universe
     public void PopulateMapList()
     {
         LoadedObjectContainers.Clear();
-        foreach (var m in Locator.AssetLocator.GetFullMapList())
+        foreach (var m in Locator.ActiveProject.MSBBank.GetFullMapList())
         {
             LoadedObjectContainers.Add(m, null);
         }
@@ -731,46 +731,9 @@ public class Universe
                 //break;
             }
 
-            AssetDescription ad = Locator.AssetLocator.GetMapMSB(mapid);
-            if (ad.AssetPath == null)
-            {
+            IMsb msb = Locator.ActiveProject.MSBBank.GetMsb(Locator.ActiveProject.Type, mapid);
+            if (msb == null)
                 return;
-            }
-
-            IMsb msb;
-            if (Locator.AssetLocator.Type == GameType.DarkSoulsIII)
-            {
-                msb = MSB3.Read(ad.AssetPath);
-            }
-            else if (Locator.AssetLocator.Type == GameType.Sekiro)
-            {
-                msb = MSBS.Read(ad.AssetPath);
-            }
-            else if (Locator.AssetLocator.Type == GameType.EldenRing)
-            {
-                msb = MSBE.Read(ad.AssetPath);
-            }
-            else if (Locator.AssetLocator.Type == GameType.ArmoredCoreVI)
-            {
-                msb = MSB_AC6.Read(ad.AssetPath);
-            }
-            else if (Locator.AssetLocator.Type == GameType.DarkSoulsIISOTFS)
-            {
-                msb = MSB2.Read(ad.AssetPath);
-            }
-            else if (Locator.AssetLocator.Type == GameType.Bloodborne)
-            {
-                msb = MSBB.Read(ad.AssetPath);
-            }
-            else if (Locator.AssetLocator.Type == GameType.DemonsSouls)
-            {
-                msb = MSBD.Read(ad.AssetPath);
-            }
-            else
-            {
-                msb = MSB1.Read(ad.AssetPath);
-            }
-
             map.LoadMSB(msb);
 
             var amapid = Locator.AssetLocator.GetAssetMapID(mapid);

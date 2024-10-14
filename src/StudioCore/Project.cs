@@ -25,6 +25,8 @@ public class Project
 
     public readonly FMGBank FMGBank;
 
+    public readonly MSBBank MSBBank;
+
     
     public GameType Type => Settings.GameType;
     
@@ -40,6 +42,7 @@ public class Project
         ParamBank = new(this);
         ParamDiffBank = new(this);
         FMGBank = new(this);
+        MSBBank = new(this);
     }
     /// <summary>
     ///     Creates a project based in a folder with no explicit parent project, with a new ParentProject for the game directory. This is for a mod.
@@ -53,6 +56,7 @@ public class Project
         ParamBank = new(this);
         ParamDiffBank = new(this);
         FMGBank = new(this);
+        MSBBank = new(this);
     }
     /// <summary>
     ///     Creates a project based in a folder with an explicit parent project. This is for an addon or fork of a mod.
@@ -73,6 +77,7 @@ public class Project
         ParamBank = new(this);
         ParamDiffBank = new(this);
         FMGBank = new(this);
+        MSBBank = new(this);
     }
 
     /// <summary>
@@ -92,6 +97,7 @@ public class Project
         ParamBank = parent.ParamBank;
         ParamDiffBank = parent.ParamDiffBank;
         FMGBank = parent.FMGBank;
+        MSBBank = parent.MSBBank;
     }
 
     public Project CreateRecoveryProject()

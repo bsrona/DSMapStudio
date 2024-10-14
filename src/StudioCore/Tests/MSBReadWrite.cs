@@ -9,7 +9,7 @@ public static class MSBReadWrite
 {
     public static bool Run(AssetLocator locator)
     {
-        List<string> msbs = locator.GetFullMapList();
+        List<string> msbs = Locator.ActiveProject.MSBBank.GetFullMapList();
         foreach (var msb in msbs)
         {
             AssetDescription path = locator.GetMapMSB(msb);

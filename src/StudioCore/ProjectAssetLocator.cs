@@ -35,7 +35,7 @@ public class ProjectAssetLocator
         RootDirectory = dir;
     }
 
-    private string GetFileNameWithoutExtensions(string path)
+    public static string GetFileNameWithoutExtensions(string path)
     {
         return Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(path));
     }
@@ -201,56 +201,6 @@ public class ProjectAssetLocator
         else
         {
             return dirs;
-        }
-    }
-
-    /// <summary>
-    ///     Gets the full list of maps in the game (excluding chalice dungeons). Basically if there's an msb for it,
-    ///     it will be in this list.
-    /// </summary>
-    /// <returns></returns>
-    public List<string> GetFullMapList()
-    {
-
-        if (MapList != null)
-        {
-            return MapList;
-        }
-
-        try
-        {
-            HashSet<string> mapSet = new();
-
-            // DS2 has its own structure for msbs, where they are all inside individual folders
-            if (Type == GameType.DarkSoulsIISOTFS)
-            {
-                foreach (var map in GetAllAssets(@"map", [@"*.msb"], true, true))
-                {
-                    mapSet.Add(Path.GetFileNameWithoutExtension(map));
-                }
-            }
-            else
-            {
-                foreach (var msb in GetAllAssets(@"map\MapStudio\", [@"*.msb", @"*.msb.dcx"]))
-                {
-                    mapSet.Add(GetFileNameWithoutExtensions(msb));
-                }
-            }
-            Regex mapRegex = new(@"^m\d{2}_\d{2}_\d{2}_\d{2}$");
-            List<string> mapList = mapSet.Where(x => mapRegex.IsMatch(x)).ToList();
-            mapList.Sort();
-            MapList = mapList;
-            return MapList;
-        }
-        catch (DirectoryNotFoundException e)
-        {
-            // Game is likely not UXM unpacked
-            if (ParentAssetLocator != null)
-            {
-                MapList = ParentAssetLocator.GetFullMapList();
-                return MapList;
-            }
-            return new List<string>();
         }
     }
 
