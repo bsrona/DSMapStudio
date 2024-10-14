@@ -642,7 +642,7 @@ public class Universe
             return false;
         }
 
-        AssetDescription ad = Locator.AssetLocator.GetMapMSB(mapid);
+        AssetDescription ad = Locator.ActiveProject.MSBBank.GetMapMSB(mapid);
         if (ad.AssetPath == null)
         {
             return false;
@@ -1384,8 +1384,8 @@ public class Universe
         SaveBTL(map);
         try
         {
-            AssetDescription ad = Locator.AssetLocator.GetMapMSB(map.Name);
-            AssetDescription adw = Locator.AssetLocator.GetMapMSB(map.Name, true);
+            AssetDescription ad = Locator.ActiveProject.MSBBank.GetMapMSB(map.Name);
+            AssetDescription adw = Locator.ActiveProject.MSBBank.GetMapMSB(map.Name, true);
             IMsb msb;
             DCX.Type compressionType = GetCompressionType();
             if (Locator.AssetLocator.Type == GameType.DarkSoulsIII)

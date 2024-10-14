@@ -16,7 +16,7 @@ public static class MSB_AC6_Read_Write
         {
             if (msb == "m00_90_00_00")
             {
-                AssetDescription path = locator.GetMapMSB(msb);
+                AssetDescription path = Locator.ActiveProject.MSBBank.GetMapMSB(msb);
                 var bytes = File.ReadAllBytes(path.AssetPath);
                 Memory<byte> decompressed = DCX.Decompress(bytes);
                 MSB_AC6 m = MSB_AC6.Read(decompressed);

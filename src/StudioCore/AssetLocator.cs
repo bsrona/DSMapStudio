@@ -96,8 +96,6 @@ public class AssetLocator
 
     public bool CreateRecoveryProject() => Locator.ActiveProject.CreateRecoveryProject() != null;
 
-    public AssetDescription GetMapMSB(string mapid, bool writemode = false) => Locator.ActiveProject.AssetLocator.GetMapMSB(mapid, writemode);
-
     public List<AssetDescription> GetMapBTLs(string mapid, bool writemode = false) => Locator.ActiveProject.AssetLocator.GetMapBTLs(mapid, writemode);
 
     public AssetDescription GetMapNVA(string mapid, bool writemode = false) => Locator.ActiveProject.AssetLocator.GetMapNVA(mapid, writemode);

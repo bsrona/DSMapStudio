@@ -39,7 +39,7 @@ public static class GlyphCatcher
         foreach (var mapName in maps)
         {
             IMsb msb = null;
-            var path = locator.GetMapMSB(mapName).AssetPath;
+            var path = Locator.ActiveProject.MSBBank.GetMapMSB(mapName).AssetPath;
 
             switch (locator.Type)
             {

@@ -204,62 +204,6 @@ public class ProjectAssetLocator
         }
     }
 
-    public AssetDescription GetMapMSB(string mapid, bool writemode = false)
-    {
-        AssetDescription ad = new();
-        ad.AssetPath = null;
-        if (mapid.Length != 12)
-        {
-            return ad;
-        }
-
-        string preferredPath;
-        string backupPath;
-        // SOFTS
-        if (Type == GameType.DarkSoulsIISOTFS)
-        {
-            preferredPath = $@"map\{mapid}\{mapid}.msb";
-            backupPath = $@"map\{mapid}\{mapid}.msb";
-        }
-        // BB chalice maps
-        else if (Type == GameType.Bloodborne && mapid.StartsWith("m29"))
-        {
-            preferredPath = $@"\map\MapStudio\{mapid.Substring(0, 9)}_00\{mapid}.msb.dcx";
-            backupPath = $@"\map\MapStudio\{mapid.Substring(0, 9)}_00\{mapid}.msb";
-        }
-        // DeS, DS1, DS1R
-        else if (Type == GameType.DarkSoulsPTDE || Type == GameType.DarkSoulsRemastered ||
-                 Type == GameType.DemonsSouls)
-        {
-            preferredPath = $@"\map\MapStudio\{mapid}.msb";
-            backupPath = $@"\map\MapStudio\{mapid}.msb.dcx";
-        }
-        // BB, DS3, ER, SSDT
-        else if (Type == GameType.Bloodborne || Type == GameType.DarkSoulsIII || Type == GameType.EldenRing ||
-                 Type == GameType.Sekiro)
-        {
-            preferredPath = $@"\map\MapStudio\{mapid}.msb.dcx";
-            backupPath = $@"\map\MapStudio\{mapid}.msb";
-        }
-        else
-        {
-            preferredPath = $@"\map\MapStudio\{mapid}.msb.dcx";
-            backupPath = $@"\map\MapStudio\{mapid}.msb";
-        }
-
-        if (writemode)
-        {
-            ad.AssetPath = $@"{RootDirectory}\{preferredPath}";
-        }
-        else
-        {
-            ad.AssetPath = GetAssetPathFromOptions([preferredPath, backupPath]).Item2;
-        }
-
-        ad.AssetName = mapid;
-        return ad;
-    }
-
     public List<AssetDescription> GetMapBTLs(string mapid, bool writemode = false)
     {
         List<AssetDescription> adList = new();

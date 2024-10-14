@@ -51,7 +51,7 @@ public class MSBBank : DataBank
             return msb;
         }
 
-        AssetDescription ad = Project.AssetLocator.GetMapMSB(mapId);
+        AssetDescription ad = GetMapMSB(mapId);
         if (ad.AssetPath == null)
         {
             return null;
@@ -129,5 +129,62 @@ public class MSBBank : DataBank
         List<string> mapList = mapSet.Where(x => mapRegex.IsMatch(x)).ToList();
         mapList.Sort();
         return mapList;
+    }
+    public AssetDescription GetMapMSB(string mapid, bool writemode = false)
+    {
+        AssetDescription ad = new();
+        ad.AssetPath = null;
+        if (mapid.Length != 12)
+        {
+            return ad;
+        }
+
+        string preferredPath;
+        string backupPath;
+        // SOFTS
+        if (Project.Type == GameType.DarkSoulsIISOTFS)
+        {
+            preferredPath = $@"map\{mapid}\{mapid}.msb";
+            backupPath = $@"map\{mapid}\{mapid}.msb";
+        }
+        // BB chalice maps
+        else if (Project.Type == GameType.Bloodborne && mapid.StartsWith("m29"))
+        {
+            preferredPath = $@"\map\MapStudio\{mapid.Substring(0, 9)}_00\{mapid}.msb.dcx";
+            backupPath = $@"\map\MapStudio\{mapid.Substring(0, 9)}_00\{mapid}.msb";
+        }
+        // DeS, DS1, DS1R
+        else if (Project.Type == GameType.DarkSoulsPTDE || Project.Type == GameType.DarkSoulsRemastered ||
+                 Project.Type == GameType.DemonsSouls)
+        {
+            preferredPath = $@"\map\MapStudio\{mapid}.msb";
+            backupPath = $@"\map\MapStudio\{mapid}.msb.dcx";
+        }
+        // BB, DS3, ER, SSDT
+        else if (Project.Type == GameType.Bloodborne || Project.Type == GameType.DarkSoulsIII || Project.Type == GameType.EldenRing ||
+                 Project.Type == GameType.Sekiro)
+        {
+            preferredPath = $@"\map\MapStudio\{mapid}.msb.dcx";
+            backupPath = $@"\map\MapStudio\{mapid}.msb";
+        }
+        else
+        {
+            preferredPath = $@"\map\MapStudio\{mapid}.msb.dcx";
+            backupPath = $@"\map\MapStudio\{mapid}.msb";
+        }
+
+        
+
+        if (writemode)
+        {
+            ad.AssetPath = $@"{Project.AssetLocator.RootDirectory}\{preferredPath}";
+        }
+        else
+        {
+            ad.AssetPath = Project.AssetLocator.GetAssetPathFromOptions([preferredPath, backupPath]).Item2;
+        }
+
+        ad.AssetName = mapid;
+        return ad;
     }
 }
