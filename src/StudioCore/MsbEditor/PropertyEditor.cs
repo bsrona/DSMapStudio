@@ -6,6 +6,7 @@ using StudioCore.Banks;
 using StudioCore.Editor;
 using StudioCore.ParamEditor;
 using StudioCore.Renderer.Scene;
+using StudioCore.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Drawing;

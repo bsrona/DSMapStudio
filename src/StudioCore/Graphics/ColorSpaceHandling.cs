@@ -1,4 +1,4 @@
-﻿namespace StudioCore;
+﻿namespace StudioCore.Graphics;
 
 /// <summary>
 ///     Identifies the kind of color space handling that an <see cref="VulkanImGuiRenderer" /> uses.

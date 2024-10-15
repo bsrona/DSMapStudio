@@ -2,7 +2,7 @@
 // from https://raw.githubusercontent.com/ForkAwesome/Fork-Awesome/master/src/icons/icons.yml
 // for use with https://github.com/ForkAwesome/Fork-Awesome/blob/master/fonts/forkawesome-webfont.ttf
 
-namespace StudioCore;
+namespace StudioCore.Utilities;
 
 public class ForkAwesome
 {

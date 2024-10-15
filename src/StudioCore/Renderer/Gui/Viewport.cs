@@ -4,6 +4,7 @@ using StudioCore.Editor;
 using StudioCore.MsbEditor;
 using StudioCore.Renderer.Resource;
 using StudioCore.Renderer.Scene;
+using StudioCore.Utilities;
 using System;
 using System.Drawing;
 using System.Numerics;
