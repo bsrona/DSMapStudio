@@ -37,6 +37,7 @@ public class MSBBank : DataBank
 
     public override void Save()
     {
+        //move this functionality to msbbank - requires editing IMsb rather than Map! Current editor is a big liar!
     }
 
     protected override IEnumerable<StudioResource> GetDependencies(Project project)
