@@ -2,7 +2,7 @@
 
 using StudioCore.Renderer.Scene;
 
-namespace StudioCore.DebugPrimitives;
+namespace StudioCore.Renderer.DebugPrimitives;
 
 public class DbgPrimGeometryData
 {

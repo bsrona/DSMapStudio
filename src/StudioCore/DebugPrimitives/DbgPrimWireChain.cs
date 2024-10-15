@@ -7,7 +7,7 @@ using System.Threading;
 using StudioCore.Renderer.Scene;
 using Veldrid.Utilities;
 
-namespace StudioCore.DebugPrimitives;
+namespace StudioCore.Renderer.DebugPrimitives;
 
 public class DbgPrimWireChain : DbgPrimWire
 {

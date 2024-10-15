@@ -288,7 +288,7 @@ public class Universe
             return null;
         }
 
-        DebugPrimitives.DbgPrimWireChain line = new(points, looseStartPoints, System.Drawing.Color.Red, endAtStart, random);
+        Renderer.DebugPrimitives.DbgPrimWireChain line = new(points, looseStartPoints, System.Drawing.Color.Red, endAtStart, random);
         DebugPrimitiveRenderableProxy mesh = new(_renderScene.OpaqueRenderables, line)
         {
             BaseColor = System.Drawing.Color.Red,

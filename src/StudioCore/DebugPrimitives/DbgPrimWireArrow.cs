@@ -3,7 +3,7 @@ using System;
 using System.Drawing;
 using System.Numerics;
 
-namespace StudioCore.DebugPrimitives;
+namespace StudioCore.Renderer.DebugPrimitives;
 
 public class DbgPrimWireArrow : DbgPrimWire
 {

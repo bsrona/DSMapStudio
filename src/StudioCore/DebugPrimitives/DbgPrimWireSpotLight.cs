@@ -4,7 +4,7 @@ using System.Drawing;
 using System.Numerics;
 using Veldrid.Utilities;
 
-namespace StudioCore.DebugPrimitives;
+namespace StudioCore.Renderer.DebugPrimitives;
 
 public class DbgPrimWireSpotLight : DbgPrimWire
 {

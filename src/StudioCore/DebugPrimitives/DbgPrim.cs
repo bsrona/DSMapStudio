@@ -7,7 +7,7 @@ using Veldrid;
 using Veldrid.Utilities;
 using Vortice.Vulkan;
 
-namespace StudioCore.DebugPrimitives;
+namespace StudioCore.Renderer.DebugPrimitives;
 
 public enum DbgPrimCategory
 {

@@ -1,5 +1,5 @@
 ﻿using static Andre.Native.ImGuiBindings;
-using StudioCore.DebugPrimitives;
+using StudioCore.Renderer.DebugPrimitives;
 using StudioCore.Renderer.Scene;
 using System;
 using System.Collections.Generic;

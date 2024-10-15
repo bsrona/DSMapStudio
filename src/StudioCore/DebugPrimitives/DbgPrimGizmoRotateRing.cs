@@ -7,7 +7,7 @@ using System.Linq;
 using System.Numerics;
 using Veldrid.Utilities;
 
-namespace StudioCore.DebugPrimitives;
+namespace StudioCore.Renderer.DebugPrimitives;
 
 public class DbgPrimGizmoRotateRing : DbgPrimGizmo
 {
