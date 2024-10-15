@@ -8,7 +8,7 @@ using System.Numerics;
 using Veldrid.Utilities;
 using Vortice.Vulkan;
 
-namespace StudioCore.Resource;
+namespace StudioCore.Renderer.Resource;
 
 public class HavokCollisionResource : IResource, IDisposable
 {

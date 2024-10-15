@@ -1,7 +1,7 @@
 ﻿using static Andre.Native.ImGuiBindings;
 using StudioCore.Editor;
 using StudioCore.Gui;
-using StudioCore.Resource;
+using StudioCore.Renderer.Resource;
 using StudioCore.Renderer.Scene;
 using System;
 using System.Collections.Generic;

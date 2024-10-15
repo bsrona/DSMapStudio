@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 using Veldrid;
 using Vortice.Vulkan;
 
-namespace StudioCore.Resource;
+namespace StudioCore.Renderer.Resource;
 
 public enum MeshLayoutType
 {

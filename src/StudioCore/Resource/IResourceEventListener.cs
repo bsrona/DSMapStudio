@@ -1,4 +1,4 @@
-﻿namespace StudioCore.Resource;
+﻿namespace StudioCore.Renderer.Resource;
 
 /// <summary>
 ///     Implementors of this interface can subscribe to a resource handle to be notified of resource load/unload events

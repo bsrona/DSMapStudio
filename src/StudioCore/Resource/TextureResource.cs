@@ -2,7 +2,7 @@
 using StudioCore.Renderer.Scene;
 using System;
 
-namespace StudioCore.Resource;
+namespace StudioCore.Renderer.Resource;
 
 public class TextureResource : IResource, IDisposable
 {

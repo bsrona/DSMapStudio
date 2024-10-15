@@ -15,7 +15,7 @@ using Veldrid;
 using Veldrid.Utilities;
 using static SoulsFormats.FLVER;
 
-namespace StudioCore.Resource;
+namespace StudioCore.Renderer.Resource;
 
 public class FlverResource : IResource, IDisposable
 {

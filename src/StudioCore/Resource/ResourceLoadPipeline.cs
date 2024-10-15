@@ -3,7 +3,7 @@ using System;
 using System.IO;
 using System.Threading.Tasks.Dataflow;
 
-namespace StudioCore.Resource;
+namespace StudioCore.Renderer.Resource;
 
 public readonly record struct LoadByteResourceRequest(
     string VirtualPath,

@@ -12,7 +12,7 @@ using StudioCore.Help;
 using StudioCore.MsbEditor;
 using StudioCore.ParamEditor;
 using StudioCore.Platform;
-using StudioCore.Resource;
+using StudioCore.Renderer.Resource;
 using StudioCore.Tests;
 using StudioCore.TextEditor;
 using System;

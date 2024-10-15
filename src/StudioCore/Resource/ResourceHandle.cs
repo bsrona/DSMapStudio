@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace StudioCore.Resource;
+namespace StudioCore.Renderer.Resource;
 
 /// <summary>
 ///     Requested access level to a given resource

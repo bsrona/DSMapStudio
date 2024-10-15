@@ -4,7 +4,7 @@ using SoulsFormats;
 using StudioCore.Editor;
 using StudioCore.Gui;
 using StudioCore.Platform;
-using StudioCore.Resource;
+using StudioCore.Renderer.Resource;
 using StudioCore.Renderer.Scene;
 using StudioCore.Utilities;
 using System;

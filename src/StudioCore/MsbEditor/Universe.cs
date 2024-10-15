@@ -2,7 +2,7 @@
 using Microsoft.Extensions.Logging;
 using SoulsFormats;
 using StudioCore.ParamEditor;
-using StudioCore.Resource;
+using StudioCore.Renderer.Resource;
 using StudioCore.Renderer.Scene;
 using System;
 using System.Collections.Generic;

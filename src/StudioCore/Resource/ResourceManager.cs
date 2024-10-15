@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using System.Threading.Tasks.Schedulers;
 
-namespace StudioCore.Resource;
+namespace StudioCore.Renderer.Resource;
 
 /// <summary>
 ///     Manages resources (mainly GPU) such as textures and models, and can be used to unload and reload them at will.

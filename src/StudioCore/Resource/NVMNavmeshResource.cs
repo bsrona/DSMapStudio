@@ -6,7 +6,7 @@ using System.Linq;
 using System.Numerics;
 using Veldrid.Utilities;
 
-namespace StudioCore.Resource;
+namespace StudioCore.Renderer.Resource;
 
 public class NVMNavmeshResource : IResource, IDisposable
 {

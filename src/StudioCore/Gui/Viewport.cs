@@ -2,7 +2,7 @@
 using StudioCore.Renderer.DebugPrimitives;
 using StudioCore.Editor;
 using StudioCore.MsbEditor;
-using StudioCore.Resource;
+using StudioCore.Renderer.Resource;
 using StudioCore.Renderer.Scene;
 using System;
 using System.Drawing;

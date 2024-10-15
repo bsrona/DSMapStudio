@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace StudioCore.Resource;
+namespace StudioCore.Renderer.Resource;
 
 public interface IResource
 {

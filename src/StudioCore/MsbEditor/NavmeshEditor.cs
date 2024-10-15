@@ -2,7 +2,7 @@
 using HKX2.Builders;
 using static Andre.Native.ImGuiBindings;
 using SoulsFormats;
-using StudioCore.Resource;
+using StudioCore.Renderer.Resource;
 using StudioCore.Renderer.Scene;
 using System.Collections.Generic;
 using System.IO;
