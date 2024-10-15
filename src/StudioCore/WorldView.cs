@@ -1,4 +1,5 @@
-﻿using Silk.NET.SDL;
+﻿using StudioCore.Utilities;
+using Silk.NET.SDL;
 using System;
 using System.Numerics;
 using Veldrid;

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Numerics;
 using System.Threading;
 using StudioCore.Renderer.Scene;
+using StudioCore.Utilities;
 using Veldrid.Utilities;
 
 namespace StudioCore.Renderer.DebugPrimitives;

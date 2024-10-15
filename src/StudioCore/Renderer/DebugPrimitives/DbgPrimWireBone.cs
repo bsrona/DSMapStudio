@@ -1,4 +1,5 @@
-﻿using System.Drawing;
+﻿using StudioCore.Utilities;
+using System.Drawing;
 using System.Numerics;
 
 namespace StudioCore.Renderer.DebugPrimitives;

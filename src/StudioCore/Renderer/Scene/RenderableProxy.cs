@@ -1,6 +1,7 @@
 ﻿#nullable enable
 using StudioCore.Renderer.DebugPrimitives;
 using StudioCore.Renderer.Resource;
+using StudioCore.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Drawing;

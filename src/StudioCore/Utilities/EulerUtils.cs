@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Numerics;
 
-namespace StudioCore;
+namespace StudioCore.Utilities;
 
 public static class EulerUtils
 {

@@ -1,4 +1,4 @@
-﻿namespace StudioCore;
+﻿namespace StudioCore.Renderer;
 
 public class DDSDeswizzler
 {
