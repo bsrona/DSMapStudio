@@ -5,7 +5,7 @@ using System.Numerics;
 using Veldrid;
 using Veldrid.Sdl2;
 
-namespace StudioCore;
+namespace StudioCore.Renderer;
 
 public class WorldView
 {
