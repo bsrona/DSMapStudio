@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 
-namespace StudioCore;
+namespace StudioCore.Havok;
 
 public class NewAnimSkeleton
 {

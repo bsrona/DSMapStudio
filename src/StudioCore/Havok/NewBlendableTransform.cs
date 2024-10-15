@@ -1,6 +1,6 @@
 ﻿using System.Numerics;
 
-namespace StudioCore;
+namespace StudioCore.Havok;
 
 public struct NewBlendableTransform
 {
