@@ -1,4 +1,4 @@
-﻿using StudioCore.Resource;
+﻿using StudioCore.Renderer.Resource;
 using System.Drawing;
 using System.Numerics;
 using Veldrid;

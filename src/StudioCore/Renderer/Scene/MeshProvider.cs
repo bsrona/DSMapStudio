@@ -1,4 +1,4 @@
-﻿using StudioCore.Resource;
+﻿using StudioCore.Renderer.Resource;
 using System;
 using System.Collections.Generic;
 using System.IO;
