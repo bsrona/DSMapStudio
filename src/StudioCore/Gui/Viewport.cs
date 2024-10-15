@@ -12,7 +12,7 @@ using Veldrid.Sdl2;
 using Veldrid.Utilities;
 using Rectangle = Veldrid.Rectangle;
 
-namespace StudioCore.Gui;
+namespace StudioCore.Renderer.Gui;
 
 /// <summary>
 ///     A viewport is a virtual (i.e. render to texture/render target) view of a scene. It can receive input events to

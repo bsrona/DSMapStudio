@@ -2,7 +2,7 @@ using static Andre.Native.ImGuiBindings;
 using SoulsFormats;
 using StudioCore.Banks;
 using StudioCore.Editor;
-using StudioCore.Gui;
+using StudioCore.Renderer.Gui;
 using StudioCore.ParamEditor;
 using StudioCore.Platform;
 using StudioCore.Renderer.Scene;

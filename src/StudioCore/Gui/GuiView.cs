@@ -1,6 +1,6 @@
 ﻿using System.Drawing;
 
-namespace StudioCore.Gui;
+namespace StudioCore.Renderer.Gui;
 
 /// <summary>
 ///     A self contained view that contains a self contained functional GUI

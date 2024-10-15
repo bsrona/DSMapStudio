@@ -6,7 +6,7 @@ using Veldrid;
 using Veldrid.Sdl2;
 using Veldrid.Utilities;
 
-namespace StudioCore.Gui;
+namespace StudioCore.Renderer.Gui;
 
 /// <summary>
 ///     A null viewport that doesn't actually do anything

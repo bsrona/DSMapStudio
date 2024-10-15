@@ -3,7 +3,7 @@ using SoulsFormats;
 using StudioCore.Banks;
 using StudioCore.Banks.AliasBank;
 using StudioCore.Editor;
-using StudioCore.Gui;
+using StudioCore.Renderer.Gui;
 using StudioCore.Editor;
 using StudioCore.MsbEditor;
 using StudioCore.Platform;

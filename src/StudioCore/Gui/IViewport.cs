@@ -3,7 +3,7 @@ using Veldrid;
 using Veldrid.Sdl2;
 using Veldrid.Utilities;
 
-namespace StudioCore.Gui;
+namespace StudioCore.Renderer.Gui;
 
 public interface IViewport
 {

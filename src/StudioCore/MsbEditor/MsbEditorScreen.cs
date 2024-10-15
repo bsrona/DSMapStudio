@@ -2,7 +2,7 @@
 using Microsoft.Extensions.Logging;
 using SoulsFormats;
 using StudioCore.Editor;
-using StudioCore.Gui;
+using StudioCore.Renderer.Gui;
 using StudioCore.Platform;
 using StudioCore.Renderer.Resource;
 using StudioCore.Renderer.Scene;
@@ -15,7 +15,7 @@ using System.Numerics;
 using Veldrid;
 using Veldrid.Sdl2;
 using Veldrid.Utilities;
-using Viewport = StudioCore.Gui.Viewport;
+using Viewport = StudioCore.Renderer.Gui.Viewport;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using StudioCore.Editors.AssetBrowser;
 

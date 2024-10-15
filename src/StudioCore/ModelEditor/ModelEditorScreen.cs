@@ -1,6 +1,6 @@
 ﻿using static Andre.Native.ImGuiBindings;
 using StudioCore.Editor;
-using StudioCore.Gui;
+using StudioCore.Renderer.Gui;
 using StudioCore.Renderer.Resource;
 using StudioCore.Renderer.Scene;
 using System;
@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 using Veldrid;
 using Veldrid.Sdl2;
 using Veldrid.Utilities;
-using Viewport = StudioCore.Gui.Viewport;
+using Viewport = StudioCore.Renderer.Gui.Viewport;
 using StudioCore.Editors.AssetBrowser;
 
 namespace StudioCore.MsbEditor;
