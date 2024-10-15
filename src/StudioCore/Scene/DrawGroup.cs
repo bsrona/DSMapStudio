@@ -1,4 +1,4 @@
-﻿namespace StudioCore.Scene;
+﻿namespace StudioCore.Renderer.Scene;
 
 public class DrawGroup
 {

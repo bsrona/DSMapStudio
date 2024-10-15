@@ -1,5 +1,5 @@
 ﻿using SoulsFormats;
-using StudioCore.Scene;
+using StudioCore.Renderer.Scene;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -44,7 +44,7 @@ public class NVMNavmeshResource : IResource, IDisposable
         var buffersize = (uint)IndexCount * 4u;
         var vbuffersize = (uint)VertexCount * NavmeshLayout.SizeInBytes;
         GeomBuffer =
-            Renderer.GeometryBufferAllocator.Allocate(vbuffersize, buffersize, (int)NavmeshLayout.SizeInBytes, 4);
+            Renderer.Scene.Renderer.GeometryBufferAllocator.Allocate(vbuffersize, buffersize, (int)NavmeshLayout.SizeInBytes, 4);
         var MeshIndices = new Span<int>(GeomBuffer.MapIBuffer().ToPointer(), IndexCount);
         var MeshVertices =
             new Span<NavmeshLayout>(GeomBuffer.MapVBuffer().ToPointer(), VertexCount);

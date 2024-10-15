@@ -7,7 +7,7 @@ using StudioCore.Gui;
 using StudioCore.Editor;
 using StudioCore.MsbEditor;
 using StudioCore.Platform;
-using StudioCore.Scene;
+using StudioCore.Renderer.Scene;
 using StudioCore.Utilities;
 using System;
 using System.Collections.Generic;

@@ -2,7 +2,7 @@
 using Veldrid;
 using Vortice.Vulkan;
 
-namespace StudioCore.Scene;
+namespace StudioCore.Renderer.Scene;
 
 internal static class StaticResourceCache
 {

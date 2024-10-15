@@ -7,7 +7,7 @@ using Veldrid;
 using Veldrid.Utilities;
 using Vortice.Vulkan;
 
-namespace StudioCore.Scene;
+namespace StudioCore.Renderer.Scene;
 
 public interface IMeshProviderEventListener
 {

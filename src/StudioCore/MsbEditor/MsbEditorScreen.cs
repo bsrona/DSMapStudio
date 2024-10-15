@@ -5,7 +5,7 @@ using StudioCore.Editor;
 using StudioCore.Gui;
 using StudioCore.Platform;
 using StudioCore.Resource;
-using StudioCore.Scene;
+using StudioCore.Renderer.Scene;
 using StudioCore.Utilities;
 using System;
 using System.Collections.Generic;

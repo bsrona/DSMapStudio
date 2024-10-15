@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using Veldrid.Utilities;
 
-namespace StudioCore.Scene;
+namespace StudioCore.Renderer.Scene;
 
 /// <summary>
 ///     A scene in the context of rendering. This isn't focused on the heirarchy or properties of an object,

@@ -1,7 +1,7 @@
 ﻿using DotNext.IO.MemoryMappedFiles;
 using HKX2;
 using SoulsFormats;
-using StudioCore.Scene;
+using StudioCore.Renderer.Scene;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -68,7 +68,7 @@ public class HavokNavmeshResource : IResource, IDisposable
         var buffersize = (uint)IndexCount * 4u;
         var vbuffersize = (uint)VertexCount * NavmeshLayout.SizeInBytes;
         GeomBuffer =
-            Renderer.GeometryBufferAllocator.Allocate(
+            Renderer.Scene.Renderer.GeometryBufferAllocator.Allocate(
                 vbuffersize, buffersize, (int)NavmeshLayout.SizeInBytes, 4);
         var MeshIndices = new Span<int>(GeomBuffer.MapIBuffer().ToPointer(), IndexCount);
         var MeshVertices =
@@ -76,7 +76,7 @@ public class HavokNavmeshResource : IResource, IDisposable
         PickingVertices = new Vector3[VertexCount];
         PickingIndices = new int[IndexCount];
 
-        ResourceFactory factory = Renderer.Factory;
+        ResourceFactory factory = Renderer.Scene.Renderer.Factory;
 
         var idx = 0;
 
@@ -192,7 +192,7 @@ public class HavokNavmeshResource : IResource, IDisposable
         var lsize = MeshLayoutUtils.GetLayoutVertexSize(MeshLayoutType.LayoutPositionColor);
         var vbuffersize = (uint)GraphVertexCount * lsize;
 
-        CostGraphGeomBuffer = Renderer.GeometryBufferAllocator.Allocate(vbuffersize, buffersize, (int)lsize, 4);
+        CostGraphGeomBuffer = Renderer.Scene.Renderer.GeometryBufferAllocator.Allocate(vbuffersize, buffersize, (int)lsize, 4);
         var MeshIndices = new Span<int>(CostGraphGeomBuffer.MapIBuffer().ToPointer(), GraphIndexCount);
         var MeshVertices =
             new Span<PositionColor>(CostGraphGeomBuffer.MapVBuffer().ToPointer(), GraphVertexCount);

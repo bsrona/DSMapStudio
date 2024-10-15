@@ -1,7 +1,7 @@
 ﻿using System;
 using Veldrid;
 
-namespace StudioCore.Scene;
+namespace StudioCore.Renderer.Scene;
 
 public struct ShaderSetCacheKey : IEquatable<ShaderSetCacheKey>
 {

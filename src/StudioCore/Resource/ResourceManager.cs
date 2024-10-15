@@ -1,7 +1,7 @@
 ﻿using static Andre.Native.ImGuiBindings;
 using Microsoft.Extensions.Logging;
 using SoulsFormats;
-using StudioCore.Scene;
+using StudioCore.Renderer.Scene;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -352,11 +352,11 @@ public static class ResourceManager
         }
         else
         {
-            if (Renderer.GeometryBufferAllocator != null &&
-                Renderer.GeometryBufferAllocator.HasStagingOrPending())
+            if (Renderer.Scene.Renderer.GeometryBufferAllocator != null &&
+                Renderer.Scene.Renderer.GeometryBufferAllocator.HasStagingOrPending())
             {
                 Tracy.___tracy_c_zone_context ctx = Tracy.TracyCZoneN(1, "Flush Staging buffer");
-                Renderer.GeometryBufferAllocator.FlushStaging(true);
+                Renderer.Scene.Renderer.GeometryBufferAllocator.FlushStaging(true);
                 Tracy.TracyCZoneEnd(ctx);
             }
 

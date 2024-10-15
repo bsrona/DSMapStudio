@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace StudioCore.Scene;
+namespace StudioCore.Renderer.Scene;
 
 [Flags]
 public enum RenderFilter

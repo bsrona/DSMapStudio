@@ -1,4 +1,4 @@
-﻿using StudioCore.Scene;
+﻿using StudioCore.Renderer.Scene;
 using System;
 using System.Drawing;
 using System.Numerics;
@@ -149,7 +149,7 @@ public class DbgPrimWireSpheroidWithArrow : DbgPrimWire
             {
                 GeomBuffer = GeometryBuffer
             };*/
-            Renderer.AddBackgroundUploadTask((d, cl) =>
+            Renderer.Scene.Renderer.AddBackgroundUploadTask((d, cl) =>
             {
                 UpdatePerFrameResources(d, cl, null);
             });

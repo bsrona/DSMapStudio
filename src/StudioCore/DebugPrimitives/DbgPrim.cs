@@ -1,5 +1,5 @@
 ﻿using StudioCore.Resource;
-using StudioCore.Scene;
+using StudioCore.Renderer.Scene;
 using System;
 using System.Drawing;
 using System.Numerics;
@@ -154,7 +154,7 @@ public abstract class DbgPrim : IDbgPrim, IDisposable
             GeometryBuffer = null;
             if (Vertices.Length > 0 && Indices.Length > 0)
             {
-                GeometryBuffer = Renderer.GeometryBufferAllocator.Allocate(28 * (uint)Vertices.Length,
+                GeometryBuffer = Renderer.Scene.Renderer.GeometryBufferAllocator.Allocate(28 * (uint)Vertices.Length,
                     2 * (uint)Indices.Length, 28, 2, h =>
                     {
                         h.FillVBuffer(Vertices);
@@ -203,7 +203,7 @@ public abstract class DbgPrim : IDbgPrim, IDisposable
         NeedToRecreateGeomBuffer = true;
     }
 
-    private unsafe void DrawPrimitive(Renderer.IndirectDrawEncoder encoder, SceneRenderPipeline sp)
+    private unsafe void DrawPrimitive(Renderer.Scene.Renderer.IndirectDrawEncoder encoder, SceneRenderPipeline sp)
     {
         if (GeometryBuffer == null || GeometryBuffer.VAllocationSize == 0 || GeometryBuffer.IAllocationSize == 0)
         {
@@ -217,7 +217,7 @@ public abstract class DbgPrim : IDbgPrim, IDisposable
             return;
         }
 
-        Renderer.IndirectDrawIndexedArgumentsPacked args = new();
+        Renderer.Scene.Renderer.IndirectDrawIndexedArgumentsPacked args = new();
         args.FirstInstance = WorldBuffer.AllocationStart / (uint)sizeof(InstanceData);
         args.VertexOffset = (int)(GeometryBuffer.VAllocationStart / 28);
         args.InstanceCount = 1;
@@ -226,7 +226,7 @@ public abstract class DbgPrim : IDbgPrim, IDisposable
         //encoder.AddDraw(ref args, GeomBuffer.BufferIndex, RenderPipeline, PerObjRS, IndexFormat.UInt16);
     }
 
-    public void Draw(Renderer.IndirectDrawEncoder encoder, SceneRenderPipeline sp, IDbgPrim parentPrim,
+    public void Draw(Renderer.Scene.Renderer.IndirectDrawEncoder encoder, SceneRenderPipeline sp, IDbgPrim parentPrim,
         Matrix4x4 world)
     {
         DrawPrimitive(encoder, sp);
@@ -234,7 +234,7 @@ public abstract class DbgPrim : IDbgPrim, IDisposable
 
     protected abstract void DisposeBuffers();
 
-    public void SubmitRenderObjects(Renderer.RenderQueue queue)
+    public void SubmitRenderObjects(Renderer.Scene.Renderer.RenderQueue queue)
     {
         //ulong code = RenderPipeline != null ? (ulong)RenderPipeline.GetHashCode() : 0;
         //queue.Add(this, RenderKey.Create((int)(code & 0xFFFFFFFF), (uint)BufferIndex));

@@ -1,6 +1,6 @@
 ﻿using static Andre.Native.ImGuiBindings;
 using StudioCore.Editor;
-using StudioCore.Scene;
+using StudioCore.Renderer.Scene;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;

@@ -1,6 +1,6 @@
 ﻿//using Microsoft.Xna.Framework.Graphics;
 
-using StudioCore.Scene;
+using StudioCore.Renderer.Scene;
 
 namespace StudioCore.DebugPrimitives;
 

@@ -27,7 +27,7 @@ using Veldrid;
 using Veldrid.Sdl2;
 using StudioCore.Editor;
 using StudioCore.Utilities;
-using Renderer = StudioCore.Scene.Renderer;
+using Renderer = StudioCore.Renderer.Scene.Renderer;
 using Thread = System.Threading.Thread;
 using Version = System.Version;
 
@@ -384,7 +384,7 @@ public class MapStudioNew
             else
             {
                 // Flush the background queues
-                Renderer.Frame(null, true);
+                Renderer.Scene.Renderer.Frame(null, true);
             }
         }
 

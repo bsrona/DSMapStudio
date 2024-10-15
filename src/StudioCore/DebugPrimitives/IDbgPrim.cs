@@ -1,5 +1,5 @@
 ﻿using StudioCore.Resource;
-using StudioCore.Scene;
+using StudioCore.Renderer.Scene;
 using System;
 using System.Drawing;
 using Veldrid;

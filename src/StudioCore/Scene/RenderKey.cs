@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 
-namespace StudioCore.Scene;
+namespace StudioCore.Renderer.Scene;
 
 public struct RenderKey : IComparable<RenderKey>, IComparable
 {

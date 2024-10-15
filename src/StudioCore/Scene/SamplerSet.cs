@@ -1,7 +1,7 @@
 ﻿using Veldrid;
 using Vortice.Vulkan;
 
-namespace StudioCore.Scene;
+namespace StudioCore.Renderer.Scene;
 
 /// <summary>
 ///     Helper class that contains descriptor sets and layouts for samplers

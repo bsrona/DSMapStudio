@@ -11,7 +11,7 @@ using Veldrid;
 using Veldrid.Utilities;
 using Vortice.Vulkan;
 
-namespace StudioCore.Scene;
+namespace StudioCore.Renderer.Scene;
 
 /// <summary>
 ///     Model marker type for meshes that may not be visible in the editor (c0000, fogwalls, etc)

@@ -1,7 +1,7 @@
 ﻿using System.Numerics;
 using System.Runtime.InteropServices;
 
-namespace StudioCore.Scene;
+namespace StudioCore.Renderer.Scene;
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
 public unsafe struct SceneParam

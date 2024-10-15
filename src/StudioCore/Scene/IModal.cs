@@ -1,4 +1,4 @@
-﻿namespace StudioCore.Scene;
+﻿namespace StudioCore.Renderer.Scene;
 
 /// <summary>
 ///     Simple interface for a modal dialogue

@@ -1,4 +1,4 @@
-﻿using StudioCore.Scene;
+﻿using StudioCore.Renderer.Scene;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Numerics;
@@ -103,7 +103,7 @@ public class DbgPrimWireBox : DbgPrimWire
 
             GeometryData = new DbgPrimGeometryData { GeomBuffer = GeometryBuffer };
 
-            Renderer.AddBackgroundUploadTask((d, cl) =>
+            Renderer.Scene.Renderer.AddBackgroundUploadTask((d, cl) =>
             {
                 UpdatePerFrameResources(d, cl, null);
             });

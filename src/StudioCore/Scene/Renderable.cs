@@ -4,7 +4,7 @@ using Veldrid;
 using Veldrid.Utilities;
 using Vortice.Vulkan;
 
-namespace StudioCore.Scene;
+namespace StudioCore.Renderer.Scene;
 
 /// <summary>
 ///     Contains if the component is visible/valid. Valid means that there's an actual

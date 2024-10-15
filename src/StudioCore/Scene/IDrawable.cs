@@ -2,7 +2,7 @@
 using System.Numerics;
 using Veldrid.Utilities;
 
-namespace StudioCore.Scene;
+namespace StudioCore.Renderer.Scene;
 
 /// <summary>
 ///     A drawable is an object that is capable of creating and submiting rendering

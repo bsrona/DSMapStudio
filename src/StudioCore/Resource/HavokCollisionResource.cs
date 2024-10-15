@@ -1,6 +1,6 @@
 ﻿using HKX2;
 using SoulsFormats;
-using StudioCore.Scene;
+using StudioCore.Renderer.Scene;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -115,7 +115,7 @@ public class HavokCollisionResource : IResource, IDisposable
         var buffersize = (uint)dest.IndexCount * 4u;
         var vbuffersize = (uint)dest.VertexCount * CollisionLayout.SizeInBytes;
         dest.GeomBuffer =
-            Renderer.GeometryBufferAllocator.Allocate(vbuffersize, buffersize, (int)CollisionLayout.SizeInBytes, 4);
+            Renderer.Scene.Renderer.GeometryBufferAllocator.Allocate(vbuffersize, buffersize, (int)CollisionLayout.SizeInBytes, 4);
         var MeshIndices = new Span<int>(dest.GeomBuffer.MapIBuffer().ToPointer(), dest.IndexCount);
         var MeshVertices =
             new Span<CollisionLayout>(dest.GeomBuffer.MapVBuffer().ToPointer(), dest.VertexCount);
@@ -331,7 +331,7 @@ public class HavokCollisionResource : IResource, IDisposable
         var buffersize = (uint)dest.IndexCount * 4u;
         var vbuffersize = (uint)dest.VertexCount * CollisionLayout.SizeInBytes;
         dest.GeomBuffer =
-            Renderer.GeometryBufferAllocator.Allocate(vbuffersize, buffersize, (int)CollisionLayout.SizeInBytes, 4);
+            Renderer.Scene.Renderer.GeometryBufferAllocator.Allocate(vbuffersize, buffersize, (int)CollisionLayout.SizeInBytes, 4);
         var MeshIndices = new Span<int>(dest.GeomBuffer.MapIBuffer().ToPointer(), dest.IndexCount);
         var MeshVertices =
             new Span<CollisionLayout>(dest.GeomBuffer.MapVBuffer().ToPointer(), dest.VertexCount);
@@ -524,7 +524,7 @@ public class HavokCollisionResource : IResource, IDisposable
         var buffersize = (uint)dest.IndexCount * 4u;
         var vbuffersize = (uint)dest.VertexCount * CollisionLayout.SizeInBytes;
         dest.GeomBuffer =
-            Renderer.GeometryBufferAllocator.Allocate(vbuffersize, buffersize, (int)CollisionLayout.SizeInBytes, 4);
+            Renderer.Scene.Renderer.GeometryBufferAllocator.Allocate(vbuffersize, buffersize, (int)CollisionLayout.SizeInBytes, 4);
         var MeshIndices = new Span<int>(dest.GeomBuffer.MapIBuffer().ToPointer(), dest.IndexCount);
         var MeshVertices =
             new Span<CollisionLayout>(dest.GeomBuffer.MapVBuffer().ToPointer(), dest.VertexCount);

@@ -5,7 +5,7 @@ using Veldrid;
 using Veldrid.Utilities;
 using Vortice.Vulkan;
 
-namespace StudioCore.Scene;
+namespace StudioCore.Renderer.Scene;
 
 /// <summary>
 ///     The "renderer" for a scene. This pipeline is instantiated for every real or virtual viewport, and will

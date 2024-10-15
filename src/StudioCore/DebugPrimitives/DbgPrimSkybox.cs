@@ -1,5 +1,5 @@
 ﻿using StudioCore.Resource;
-using StudioCore.Scene;
+using StudioCore.Renderer.Scene;
 using System;
 using System.Drawing;
 using System.Numerics;
@@ -121,7 +121,7 @@ public class DbgPrimSkybox : DbgPrim
         //IndexBuffer?.Dispose();
     }
 
-    public void Render(Renderer.IndirectDrawEncoder encoder, SceneRenderPipeline sp)
+    public void Render(Renderer.Scene.Renderer.IndirectDrawEncoder encoder, SceneRenderPipeline sp)
     {
         throw new NotImplementedException();
     }

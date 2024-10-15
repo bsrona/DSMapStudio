@@ -2,7 +2,7 @@
 using StudioCore.Editor;
 using StudioCore.Gui;
 using StudioCore.Resource;
-using StudioCore.Scene;
+using StudioCore.Renderer.Scene;
 using System;
 using System.Collections.Generic;
 using System.Numerics;

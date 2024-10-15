@@ -9,7 +9,7 @@ using Veldrid;
 using Vortice.Vulkan;
 using Rectangle = Veldrid.Rectangle;
 
-namespace StudioCore.Scene;
+namespace StudioCore.Renderer.Scene;
 
 /// <summary>
 ///     Low level texture pool that maintains an array of descriptor sets that can

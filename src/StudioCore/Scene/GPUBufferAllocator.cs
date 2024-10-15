@@ -6,7 +6,7 @@ using System.Threading;
 using Veldrid;
 using Vortice.Vulkan;
 
-namespace StudioCore.Scene;
+namespace StudioCore.Renderer.Scene;
 
 public class GPUBufferAllocator
 {

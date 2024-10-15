@@ -3,7 +3,7 @@ using StudioCore.DebugPrimitives;
 using StudioCore.Editor;
 using StudioCore.MsbEditor;
 using StudioCore.Resource;
-using StudioCore.Scene;
+using StudioCore.Renderer.Scene;
 using System;
 using System.Drawing;
 using System.Numerics;
@@ -110,7 +110,7 @@ public unsafe class Viewport : IViewport
         _gizmos = new Gizmos(_actionManager, _selection, _renderScene.OverlayRenderables);
 
         _clearQuad = new FullScreenQuad();
-        Renderer.AddBackgroundUploadTask((gd, cl) =>
+        Renderer.Scene.Renderer.AddBackgroundUploadTask((gd, cl) =>
         {
             _clearQuad.CreateDeviceObjects(gd, cl);
         });
@@ -188,9 +188,9 @@ public unsafe class Viewport : IViewport
             ImGui.Text($@"Scene Render CPU time: {_viewPipeline.CPURenderTime} ms");
             ImGui.Text($@"Visible objects: {_renderScene.RenderObjectCount}");
             ImGui.Text(
-                $@"Vertex Buffers Size: {Renderer.GeometryBufferAllocator.TotalVertexFootprint / 1024 / 1024} MB");
+                $@"Vertex Buffers Size: {Renderer.Scene.Renderer.GeometryBufferAllocator.TotalVertexFootprint / 1024 / 1024} MB");
             ImGui.Text(
-                $@"Index Buffers Size: {Renderer.GeometryBufferAllocator.TotalIndexFootprint / 1024 / 1024} MB");
+                $@"Index Buffers Size: {Renderer.Scene.Renderer.GeometryBufferAllocator.TotalIndexFootprint / 1024 / 1024} MB");
             ImGui.Text($@"FLVER Read Caches: {FlverResource.CacheCount}");
             ImGui.Text($@"FLVER Read Caches Size: {FlverResource.CacheFootprint / 1024 / 1024} MB");
             //ImGui.Text($@"Selected renderable:  { _viewPipeline._pickingEntity }");

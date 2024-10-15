@@ -2,7 +2,7 @@
 using DotNext.IO.MemoryMappedFiles;
 using SoulsFormats;
 using StudioCore.MsbEditor;
-using StudioCore.Scene;
+using StudioCore.Renderer.Scene;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -342,7 +342,7 @@ public class FlverResource : IResource, IDisposable
     private unsafe void ProcessMaterial(IFlverMaterial mat, FlverMaterial dest, GameType type)
     {
         dest.MaterialName = Path.GetFileNameWithoutExtension(mat.MTD);
-        dest.MaterialBuffer = Renderer.MaterialBufferAllocator.Allocate((uint)sizeof(Material), sizeof(Material));
+        dest.MaterialBuffer = Renderer.Scene.Renderer.MaterialBufferAllocator.Allocate((uint)sizeof(Material), sizeof(Material));
         dest.MaterialData = new Material();
 
         //FLVER0 stores layouts directly in the material
@@ -442,7 +442,7 @@ public class FlverResource : IResource, IDisposable
     {
         var mtd = isUTF ? br.GetUTF16(mat.mtdOffset) : br.GetShiftJIS(mat.mtdOffset);
         dest.MaterialName = Path.GetFileNameWithoutExtension(mtd);
-        dest.MaterialBuffer = Renderer.MaterialBufferAllocator.Allocate((uint)sizeof(Material), sizeof(Material));
+        dest.MaterialBuffer = Renderer.Scene.Renderer.MaterialBufferAllocator.Allocate((uint)sizeof(Material), sizeof(Material));
         dest.MaterialData = new Material();
 
         if (!CFG.Current.EnableTexturing)
@@ -1241,7 +1241,7 @@ public class FlverResource : IResource, IDisposable
 
     private unsafe void ProcessMesh(FLVER0.Mesh mesh, FlverSubmesh dest)
     {
-        ResourceFactory? factory = Renderer.Factory;
+        ResourceFactory? factory = Renderer.Scene.Renderer.Factory;
 
         dest.Material = GPUMaterials[mesh.MaterialIndex];
 
@@ -1279,7 +1279,7 @@ public class FlverResource : IResource, IDisposable
         var indices = mesh.Triangulate(FlverDeS.Header.Version).ToArray();
         var indicesTotal = indices.Length;
 
-        dest.GeomBuffer = Renderer.GeometryBufferAllocator.Allocate(vbuffersize,
+        dest.GeomBuffer = Renderer.Scene.Renderer.GeometryBufferAllocator.Allocate(vbuffersize,
             (uint)indicesTotal * (is32bit ? 4u : 2u), (int)vSize, 4);
         var meshVertices = dest.GeomBuffer.MapVBuffer();
         var meshIndices = dest.GeomBuffer.MapIBuffer();
@@ -1392,7 +1392,7 @@ public class FlverResource : IResource, IDisposable
         }
 
         var vbuffersize = (uint)mesh.VertexCount * vSize;
-        dest.GeomBuffer = Renderer.GeometryBufferAllocator.Allocate(vbuffersize,
+        dest.GeomBuffer = Renderer.Scene.Renderer.GeometryBufferAllocator.Allocate(vbuffersize,
             (uint)indicesTotal * (is32bit ? 4u : 2u), (int)vSize, 4);
         var meshVertices = dest.GeomBuffer.MapVBuffer();
         var meshIndices = dest.GeomBuffer.MapIBuffer();
@@ -1583,7 +1583,7 @@ public class FlverResource : IResource, IDisposable
         }
 
         var vbuffersize = (uint)vertexCount * vSize;
-        dest.GeomBuffer = Renderer.GeometryBufferAllocator.Allocate(vbuffersize,
+        dest.GeomBuffer = Renderer.Scene.Renderer.GeometryBufferAllocator.Allocate(vbuffersize,
             (uint)indicesTotal * (is32bit ? 4u : 2u), (int)vSize, 4);
         var meshVertices = dest.GeomBuffer.MapVBuffer();
         var meshIndices = dest.GeomBuffer.MapIBuffer();
@@ -1819,14 +1819,14 @@ public class FlverResource : IResource, IDisposable
 
             if (GPUMeshes.Any(e => e.UseNormalWBoneTransform))
             {
-                StaticBoneBuffer = Renderer.BoneBufferAllocator.Allocate(64 * (uint)Bones.Count, 64);
+                StaticBoneBuffer = Renderer.Scene.Renderer.BoneBufferAllocator.Allocate(64 * (uint)Bones.Count, 64);
                 var tbones = new Matrix4x4[Bones.Count];
                 for (var i = 0; i < Bones.Count; i++)
                 {
                     tbones[i] = Utils.GetBoneObjectMatrix(Bones[i], Bones);
                 }
 
-                Renderer.AddBackgroundUploadTask((d, cl) =>
+                Renderer.Scene.Renderer.AddBackgroundUploadTask((d, cl) =>
                 {
                     StaticBoneBuffer.FillBuffer(cl, tbones);
                 });
@@ -1966,14 +1966,14 @@ public class FlverResource : IResource, IDisposable
 
         if (GPUMeshes.Any(e => e.UseNormalWBoneTransform))
         {
-            StaticBoneBuffer = Renderer.BoneBufferAllocator.Allocate(64 * (uint)FBones.Count, 64);
+            StaticBoneBuffer = Renderer.Scene.Renderer.BoneBufferAllocator.Allocate(64 * (uint)FBones.Count, 64);
             var tbones = new Matrix4x4[FBones.Count];
             for (var i = 0; i < FBones.Count; i++)
             {
                 tbones[i] = GetBoneObjectMatrix(FBones[i], FBones);
             }
 
-            Renderer.AddBackgroundUploadTask((d, cl) =>
+            Renderer.Scene.Renderer.AddBackgroundUploadTask((d, cl) =>
             {
                 StaticBoneBuffer.FillBuffer(cl, tbones);
             });
@@ -2110,7 +2110,7 @@ public class FlverResource : IResource, IDisposable
             SetMaterialTexture(TextureType.ShininessTextureResource2, ref MaterialData.shininessTex2, 2);
             SetMaterialTexture(TextureType.BlendmaskTextureResource, ref MaterialData.blendMaskTex, 0);
 
-            Renderer.AddBackgroundUploadTask((d, cl) =>
+            Renderer.Scene.Renderer.AddBackgroundUploadTask((d, cl) =>
             {
                 Tracy.___tracy_c_zone_context ctx = Tracy.TracyCZoneN(1, @"Material upload");
                 MaterialBuffer.FillBuffer(d, cl, ref MaterialData);

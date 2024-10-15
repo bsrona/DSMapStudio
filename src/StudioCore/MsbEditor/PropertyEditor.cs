@@ -5,7 +5,7 @@ using SoulsFormats;
 using StudioCore.Banks;
 using StudioCore.Editor;
 using StudioCore.ParamEditor;
-using StudioCore.Scene;
+using StudioCore.Renderer.Scene;
 using System;
 using System.Collections.Generic;
 using System.Drawing;

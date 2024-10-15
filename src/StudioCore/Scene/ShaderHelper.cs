@@ -5,7 +5,7 @@ using Veldrid;
 using Veldrid.SPIRV;
 using Vortice.Vulkan;
 
-namespace StudioCore.Scene;
+namespace StudioCore.Renderer.Scene;
 
 public static class ShaderHelper
 {

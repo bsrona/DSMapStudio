@@ -4,7 +4,7 @@ using System.Drawing;
 using System.Linq;
 using System.Numerics;
 using System.Threading;
-using StudioCore.Scene;
+using StudioCore.Renderer.Scene;
 using Veldrid.Utilities;
 
 namespace StudioCore.DebugPrimitives;
@@ -67,7 +67,7 @@ public class DbgPrimWireChain : DbgPrimWire
 
             GeometryData = new DbgPrimGeometryData { GeomBuffer = GeometryBuffer };
 
-            Renderer.AddBackgroundUploadTask((d, cl) =>
+            Renderer.Scene.Renderer.AddBackgroundUploadTask((d, cl) =>
             {
                 UpdatePerFrameResources(d, cl, null);
             });

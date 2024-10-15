@@ -1,5 +1,5 @@
 ﻿using SoulsFormats;
-using StudioCore.Scene;
+using StudioCore.Renderer.Scene;
 using System;
 
 namespace StudioCore.Resource;
@@ -27,11 +27,11 @@ public class TextureResource : IResource, IDisposable
     {
         if (TexturePool.TextureHandle.IsTPFCube(Texture.Textures[TPFIndex], Texture.Platform))
         {
-            GPUTexture = Renderer.GlobalCubeTexturePool.AllocateTextureDescriptor();
+            GPUTexture = Renderer.Scene.Renderer.GlobalCubeTexturePool.AllocateTextureDescriptor();
         }
         else
         {
-            GPUTexture = Renderer.GlobalTexturePool.AllocateTextureDescriptor();
+            GPUTexture = Renderer.Scene.Renderer.GlobalTexturePool.AllocateTextureDescriptor();
         }
 
         if (GPUTexture == null)
@@ -46,7 +46,7 @@ public class TextureResource : IResource, IDisposable
 
         if (Texture.Platform == TPF.TPFPlatform.PC || Texture.Platform == TPF.TPFPlatform.PS3)
         {
-            Renderer.AddLowPriorityBackgroundUploadTask((d, cl) =>
+            Renderer.Scene.Renderer.AddLowPriorityBackgroundUploadTask((d, cl) =>
             {
                 if (GPUTexture == null)
                 {
@@ -60,7 +60,7 @@ public class TextureResource : IResource, IDisposable
         }
         else if (Texture.Platform == TPF.TPFPlatform.PS4)
         {
-            Renderer.AddLowPriorityBackgroundUploadTask((d, cl) =>
+            Renderer.Scene.Renderer.AddLowPriorityBackgroundUploadTask((d, cl) =>
             {
                 if (GPUTexture == null)
                 {

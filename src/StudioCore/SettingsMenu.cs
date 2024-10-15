@@ -3,7 +3,7 @@ using SoapstoneLib;
 using StudioCore.Editor;
 using StudioCore.MsbEditor;
 using StudioCore.ParamEditor;
-using StudioCore.Scene;
+using StudioCore.Renderer.Scene;
 using StudioCore.TextEditor;
 using StudioCore.Utilities;
 using System;

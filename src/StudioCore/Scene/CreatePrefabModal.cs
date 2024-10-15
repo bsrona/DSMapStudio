@@ -2,7 +2,7 @@
 using StudioCore.MsbEditor;
 using System.Numerics;
 
-namespace StudioCore.Scene;
+namespace StudioCore.Renderer.Scene;
 
 internal class CreatePrefabModal : IModal
 {

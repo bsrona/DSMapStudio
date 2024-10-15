@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 using Veldrid;
 using Vortice.Vulkan;
 
-namespace StudioCore.Scene;
+namespace StudioCore.Renderer.Scene;
 
 public class Renderer
 {
