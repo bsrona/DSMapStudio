@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using SoulsFormats;
 using StudioCore.Editor;
+using StudioCore.Editor.MassEdit;
 using StudioCore.Platform;
 using StudioCore.TextEditor;
 using System;
@@ -69,6 +70,7 @@ public partial class ParamBank : DataBank
         return new CompoundAction(actions);
     }
 
+    /*This should be replaced by a massedit script*/
     public ActionManager TrimNewlineChrsFromNames()
     {
         (MassEditResult r, ActionManager child) =

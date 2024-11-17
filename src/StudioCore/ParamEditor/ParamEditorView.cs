@@ -1,6 +1,7 @@
 ﻿using Andre.Formats;
 using static Andre.Native.ImGuiBindings;
 using StudioCore.Editor;
+using StudioCore.Editor.MassEdit;
 using StudioCore.Platform;
 using System;
 using System.Collections.Generic;
@@ -200,7 +201,7 @@ public class ParamEditorView
         List<string> paramKeyList = UICache.GetCached(_paramEditor, _viewIndex, () =>
         {
             List<(ParamBank, Param)> list =
-                ParamSearchEngine.pse.Search(true, _selection.currentParamSearchString, true, true);
+                SearchEngine.param.Search((true, true), _selection.currentParamSearchString, true, true);
             List<string> keyList = list.Where(param => param.Item1 == ParamBank.PrimaryBank)
                 .Select(param => ParamBank.PrimaryBank.GetKeyForParam(param.Item2)).ToList();
 
@@ -518,8 +519,8 @@ public class ParamEditorView
                 }
 
                 List<Param.Row> rows = UICache.GetCached(_paramEditor, (_viewIndex, activeParam),
-                    () => RowSearchEngine.rse.Search((ParamBank.PrimaryBank, para),
-                        _selection.GetCurrentRowSearchString(), true, true));
+                    () => SearchEngine.row.Search((ParamBank.PrimaryBank, para),
+                        _selection.GetCurrentRowSearchString(), true, true).Select((x, i) => x.Item2).ToList());
 
                 var enableGrouping = !CFG.Current.Param_DisableRowGrouping && ParamMetaData
                     .Get(ParamBank.PrimaryBank.Params[activeParam].AppliedParamdef).ConsecutiveIDs;
