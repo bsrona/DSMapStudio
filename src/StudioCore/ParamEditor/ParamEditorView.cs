@@ -11,6 +11,7 @@ using System.Reflection;
 using Veldrid;
 using Octokit;
 using SoapstoneLib.Proto.Internal;
+using StudioCore.TextEditor;
 
 namespace StudioCore.ParamEditor;
 
@@ -20,6 +21,7 @@ public class ParamEditorView
     private static readonly Vector4 AUXADDEDCOLOUR = new(0.7f, 0.7f, 1, 1);
     private static readonly Vector4 PRIMARYCHANGEDCOLOUR = new(0.7f, 1, 0.7f, 1);
     private static readonly Vector4 ALLVANILLACOLOUR = new(0.9f, 0.9f, 0.9f, 1);
+    private static readonly Vector4 FMGLINKCOLOUR = new(1.0f, 1.0f, 0.0f, 1.0f);
 
     private readonly ParamRowEditor _propEditor;
     private readonly Dictionary<string, string> lastRowSearch = new();
@@ -439,11 +441,6 @@ public class ParamEditorView
         }
         else
         {
-            IParamDecorator decorator = null;
-            if (_paramEditor._decorators.ContainsKey(activeParam))
-            {
-                decorator = _paramEditor._decorators[activeParam];
-            }
 
             ParamView_RowList_Header(ref doFocus, isActiveView, ref scrollTo, activeParam);
 
@@ -496,7 +493,7 @@ public class ParamEditorView
                         }
 
                         lastCol = ParamView_RowList_Entry(selectionCachePins, i, activeParam, null, row,
-                            vanillaDiffCache, auxDiffCaches, decorator, ref scrollTo, false, true, compareCol,
+                            vanillaDiffCache, auxDiffCaches, ref scrollTo, false, true, compareCol,
                             compareColProp);
                     }
 
@@ -549,7 +546,7 @@ public class ParamEditorView
                         }
 
                         ParamView_RowList_Entry(selectionCache, i, activeParam, rows, currentRow, vanillaDiffCache,
-                            auxDiffCaches, decorator, ref scrollTo, doFocus, false, compareCol, compareColProp);
+                            auxDiffCaches, ref scrollTo, doFocus, false, compareCol, compareColProp);
                         if (prev != null && next != null && prev.ID + 1 == currentRow.ID &&
                             currentRow.ID + 1 != next.ID)
                         {
@@ -559,7 +556,7 @@ public class ParamEditorView
                     else
                     {
                         ParamView_RowList_Entry(selectionCache, i, activeParam, rows, currentRow, vanillaDiffCache,
-                            auxDiffCaches, decorator, ref scrollTo, doFocus, false, compareCol, compareColProp);
+                            auxDiffCaches, ref scrollTo, doFocus, false, compareCol, compareColProp);
                     }
                 }
 
@@ -631,20 +628,33 @@ public class ParamEditorView
         }
     }
 
-    private record struct ParamRowListEntry(int visibleRowsIndex, bool modified, bool auxModified, bool conflicts, bool selected, Param.Row row);
+    private record struct ParamRowListEntry(int visibleRowsIndex, bool modified, bool auxModified, bool conflicts, bool selected, Param.Row row, string fmgRefText);
     private void ParamView_RowList_Entry_Row(bool[] selectionCache, int selectionCacheIndex, string activeParam,
         List<Param.Row> visibleRowList, Param.Row r, HashSet<int> vanillaDiffCache,
-        List<(HashSet<int>, HashSet<int>)> auxDiffCaches, IParamDecorator decorator, ref float scrollTo,
+        List<(HashSet<int>, HashSet<int>)> auxDiffCaches, ref float scrollTo,
         bool doFocus, bool isPinned)
     {
         var diffVanilla = vanillaDiffCache.Contains(r.ID);
         var auxDiffVanilla = auxDiffCaches.Where(cache => cache.Item1.Contains(r.ID)).Count() > 0;
         var auxDiffPrimaryAndVanilla = (auxDiffVanilla ? 1 : 0) + auxDiffCaches.Where(cache => cache.Item1.Contains(r.ID) && cache.Item2.Contains(r.ID)).Count() > 1;
         var selected = selectionCache != null && selectionCacheIndex < selectionCache.Length ? selectionCache[selectionCacheIndex] : false;
-        ParamRowListEntry e = new ParamRowListEntry(selectionCacheIndex, diffVanilla, auxDiffVanilla, auxDiffPrimaryAndVanilla, selected, r);
-        ParamView_RowList_Entry_Row(e, activeParam, visibleRowList, decorator, ref scrollTo, doFocus, isPinned);
+        //Obviously this is a temporary hack and should be moved out of the loop
+        var category = FmgEntryCategory.None;
+        foreach ((var param, FmgEntryCategory cat) in ParamBank.ParamToFmgCategoryList)
+        {
+            if (activeParam != param)
+            {
+                continue;
+            }
+            category = cat;
+        }
+        //Also just be cache-ing this as per the plan
+        string fmgRefText = Locator.ActiveProject.FMGBank.GetFmgEntriesByCategory(category, false).Find((x) => x.ID == r.ID)?.Text;
+
+        ParamRowListEntry e = new ParamRowListEntry(selectionCacheIndex, diffVanilla, auxDiffVanilla, auxDiffPrimaryAndVanilla, selected, r, fmgRefText);
+        ParamView_RowList_Entry_Row(e, activeParam, visibleRowList, ref scrollTo, doFocus, isPinned, category);
     }
-    private void ParamView_RowList_Entry_Row(ParamRowListEntry rowEntry, string activeParam, List<Param.Row> p, IParamDecorator decorator, ref float scrollTo, bool doFocus, bool isPinned)
+    private void ParamView_RowList_Entry_Row(ParamRowListEntry rowEntry, string activeParam, List<Param.Row> p, ref float scrollTo, bool doFocus, bool isPinned, FmgEntryCategory fmgCategory)
     {
         
         if (rowEntry.modified)
@@ -811,9 +821,12 @@ public class ParamEditorView
             }
             ImGui.Separator();
 
-            if (decorator != null)
+            if (rowEntry.fmgRefText != null)
             {
-                decorator.DecorateContextMenuItems(rowEntry.row);
+                if (ImGui.Selectable($@"Goto {fmgCategory} Text"))
+                {
+                    EditorCommandQueue.AddCommand($@"text/select/{fmgCategory}/{rowEntry.row.ID}");
+                }
             }
 
             if (ImGui.Selectable("Compare..."))
@@ -830,9 +843,12 @@ public class ParamEditorView
             ImGui.EndPopup();
         }
 
-        if (decorator != null)
+        if (rowEntry.fmgRefText != null)
         {
-            decorator.DecorateParam(rowEntry.row);
+            ImGui.SameLine();
+            ImGui.PushStyleColorVec4(ImGuiCol.Text, FMGLINKCOLOUR);
+            ImGui.TextUnformatted($@" <{rowEntry.fmgRefText}>");
+            ImGui.PopStyleColor(1);
         }
 
         if (doFocus && _selection.GetActiveRow() == rowEntry.row)
@@ -843,7 +859,7 @@ public class ParamEditorView
 
     private bool ParamView_RowList_Entry(bool[] selectionCache, int selectionCacheIndex, string activeParam,
         List<Param.Row> p, Param.Row r, HashSet<int> vanillaDiffCache,
-        List<(HashSet<int>, HashSet<int>)> auxDiffCaches, IParamDecorator decorator, ref float scrollTo,
+        List<(HashSet<int>, HashSet<int>)> auxDiffCaches, ref float scrollTo,
         bool doFocus, bool isPinned, Param.Column compareCol, PropertyInfo compareColProp)
     {
         var scale = MapStudioNew.GetUIScale();
@@ -858,7 +874,7 @@ public class ParamEditorView
         if (ImGui.TableNextColumn())
         {
             ParamView_RowList_Entry_Row(selectionCache, selectionCacheIndex, activeParam, p, r, vanillaDiffCache,
-                auxDiffCaches, decorator, ref scrollTo, doFocus, isPinned);
+                auxDiffCaches, ref scrollTo, doFocus, isPinned);
             lastCol = true;
         }
 

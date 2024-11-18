@@ -21,20 +21,6 @@ using CompoundAction = StudioCore.Editor.CompoundAction;
 using DeleteParamsAction = StudioCore.Editor.DeleteParamsAction;
 
 namespace StudioCore.ParamEditor;
-
-/// <summary>
-///     Interface for decorating param rows with additional information (such as english
-///     strings sourced from FMG files)
-/// </summary>
-public interface IParamDecorator
-{
-    public void DecorateParam(Param.Row row);
-
-    public void DecorateContextMenuItems(Param.Row row);
-
-    public void ClearDecoratorCache();
-}
-
 public static class ParamRowIdFinder
 {
     private static int _searchID = 0;
@@ -104,67 +90,6 @@ public static class ParamRowIdFinder
         return output;
     }
 }
-
-public class FMGItemParamDecorator : IParamDecorator
-{
-    private static readonly Vector4 FMGLINKCOLOUR = new(1.0f, 1.0f, 0.0f, 1.0f);
-
-    private readonly FmgEntryCategory _category = FmgEntryCategory.None;
-
-    private readonly Dictionary<int, FMG.Entry> _entryCache = new();
-
-    public FMGItemParamDecorator(FmgEntryCategory cat)
-    {
-        _category = cat;
-    }
-
-    public void ClearDecoratorCache()
-    {
-        _entryCache.Clear();
-    }
-
-    public void DecorateParam(Param.Row row)
-    {
-        PopulateDecorator();
-        FMG.Entry entry = null;
-        _entryCache.TryGetValue(row.ID, out entry);
-
-        if (entry != null)
-        {
-            ImGui.SameLine();
-            ImGui.PushStyleColorVec4(ImGuiCol.Text, FMGLINKCOLOUR);
-            ImGui.TextUnformatted($@" <{entry.Text}>");
-            ImGui.PopStyleColor(1);
-        }
-    }
-
-    public void DecorateContextMenuItems(Param.Row row)
-    {
-        PopulateDecorator();
-        if (!_entryCache.ContainsKey(row.ID))
-        {
-            return;
-        }
-
-        if (ImGui.Selectable($@"Goto {_category.ToString()} Text"))
-        {
-            EditorCommandQueue.AddCommand($@"text/select/{_category.ToString()}/{row.ID}");
-        }
-    }
-
-    private void PopulateDecorator()
-    {
-        if (_entryCache.Count == 0 && Locator.ActiveProject.FMGBank.IsLoaded)
-        {
-            List<FMG.Entry> fmgEntries = Locator.ActiveProject.FMGBank.GetFmgEntriesByCategory(_category, false);
-            foreach (FMG.Entry fmgEntry in fmgEntries)
-            {
-                _entryCache[fmgEntry.ID] = fmgEntry;
-            }
-        }
-    }
-}
-
 public class ParamEditorScreen : EditorScreen
 {
     public static bool EditorMode;
@@ -187,8 +112,6 @@ public class ParamEditorScreen : EditorScreen
     // MassEdit Popup vars
     private string _currentMEditRegexInput = "";
     private string _currentMEditSingleCSVField = "";
-
-    internal Dictionary<string, IParamDecorator> _decorators = new();
 
     private IEnumerable<(object, int)> _distributionOutput;
     private bool _isMEditPopupOpen;
@@ -220,7 +143,6 @@ public class ParamEditorScreen : EditorScreen
         _views = new List<ParamEditorView>();
         _views.Add(new ParamEditorView(this, 0));
         _activeView = _views[0];
-        ResetFMGDecorators();
     }
 
     public string EditorName => "Param Editor";
@@ -1135,11 +1057,6 @@ public class ParamEditorScreen : EditorScreen
             }
         }
 
-        foreach (KeyValuePair<string, IParamDecorator> dec in _decorators)
-        {
-            dec.Value.ClearDecoratorCache();
-        }
-
         TaskManager.Run(new TaskManager.LiveTask("Param - Load MassEdit Scripts", TaskManager.RequeueType.Repeat,
             true, () => MassEditScript.ReloadScripts()));
         TaskManager.Run(new TaskManager.LiveTask("Param - Load Upgrader Data", TaskManager.RequeueType.Repeat, true,
@@ -1188,16 +1105,6 @@ public class ParamEditorScreen : EditorScreen
             TaskLogs.AddLog($"{e.Message}",
                 LogLevel.Error, TaskLogs.LogPriority.High, e);
         }
-    }
-
-    public void ResetFMGDecorators()
-    {
-        _decorators.Clear();
-        foreach ((var paramName, FmgEntryCategory category) in ParamBank.ParamToFmgCategoryList)
-        {
-            _decorators.Add(paramName, new FMGItemParamDecorator(category));
-        }
-        //_decorators.Add("CharacterText", new FMGItemParamDecorator(FmgEntryCategory.Characters)); // TODO: Decorators need to be updated to support text references.
     }
 
     private void LoadUpgraderData()
