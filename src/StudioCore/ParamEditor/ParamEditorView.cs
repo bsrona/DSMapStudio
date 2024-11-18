@@ -196,9 +196,10 @@ public class ParamEditorView
         "treasureboxparam"
     };
 
+    private record struct ParamListEntry(string key, Param param, ParamMetaData meta, string wiki, bool modified, bool selected);
     private void ParamView_ParamList_Main(bool doFocus, float scale, float scrollTo)
     {
-        List<string> paramKeyList = UICache.GetCached(_paramEditor, _viewIndex, () =>
+        IEnumerable<ParamListEntry> paramList = UICache.GetCached(_paramEditor, _viewIndex, "paramList", () => 
         {
             List<(ParamBank, Param)> list =
                 SearchEngine.param.Search((true, true), _selection.currentParamSearchString, true, true);
@@ -275,28 +276,34 @@ public class ParamEditorView
                 keyList.Sort();
             }
 
-            return keyList;
+            return keyList.Select((key) => 
+            {
+                Param param = ParamBank.PrimaryBank.Params[key];
+                ParamMetaData meta = ParamMetaData.Get(param.AppliedParamdef);
+                string wiki = param != null ? ParamMetaData.Get(param.AppliedParamdef)?.Wiki : null;
+                HashSet<int> diffCache = Locator.ActiveProject.ParamDiffBank.VanillaDiffCache?.GetValueOrDefault(key, null);
+                bool modified = diffCache != null && diffCache.Count != 0;
+                bool selected = key == _selection.GetActiveParam();
+                return new ParamListEntry(key, param, meta, wiki, modified, selected);
+            });
+
         });
 
-        foreach (var paramKey in paramKeyList)
+        foreach (var paramEntry in paramList)
         {
-            HashSet<int> primary = Locator.ActiveProject.ParamDiffBank.VanillaDiffCache?.GetValueOrDefault(paramKey, null);
-            Param p = ParamBank.PrimaryBank.Params[paramKey];
-            if (p != null)
+            
+            if (paramEntry.wiki != null)
             {
-                ParamMetaData meta = ParamMetaData.Get(p.AppliedParamdef);
-                var Wiki = meta?.Wiki;
-                if (Wiki != null)
+                //Not happy with this. Editor mode is lame and bad and sad. Fix helpIcon - maybe pin the string ref internally & use an out?
+                string pinnedWiki = paramEntry.wiki;
+                if (EditorDecorations.HelpIcon(paramEntry.key + "wiki", ref pinnedWiki, true))
                 {
-                    if (EditorDecorations.HelpIcon(paramKey + "wiki", ref Wiki, true))
-                    {
-                        meta.Wiki = Wiki;
-                    }
+                    if (paramEntry.meta != null) paramEntry.meta.Wiki = pinnedWiki;
                 }
             }
 
             ImGui.Indent(15.0f * scale);
-            if (primary != null ? primary.Any() : false)
+            if (paramEntry.modified)
             {
                 ImGui.PushStyleColorVec4(ImGuiCol.Text, PRIMARYCHANGEDCOLOUR);
             }
@@ -305,38 +312,38 @@ public class ParamEditorView
                 ImGui.PushStyleColorVec4(ImGuiCol.Text, ALLVANILLACOLOUR);
             }
 
-            if (ImGui.Selectable($"{paramKey}", paramKey == _selection.GetActiveParam()))
+            if (ImGui.Selectable($"{paramEntry.key}", paramEntry.selected))
             {
                 //_selection.setActiveParam(param.Key);
-                EditorCommandQueue.AddCommand($@"param/view/{_viewIndex}/{paramKey}");
+                EditorCommandQueue.AddCommand($@"param/view/{_viewIndex}/{paramEntry.key}");
             }
 
             ImGui.PopStyleColor(1);
 
-            if (doFocus && paramKey == _selection.GetActiveParam())
+            if (doFocus && paramEntry.selected)
             {
                 scrollTo = ImGui.GetCursorPosY();
             }
 
             if (ImGui.BeginPopupContextItem())
             {
-                if (ImGui.Selectable("Pin " + paramKey) &&
-                    !_paramEditor._projectSettings.PinnedParams.Contains(paramKey))
+                if (ImGui.Selectable("Pin " + paramEntry.key) &&
+                    !_paramEditor._projectSettings.PinnedParams.Contains(paramEntry.key))
                 {
-                    _paramEditor._projectSettings.PinnedParams.Add(paramKey);
+                    _paramEditor._projectSettings.PinnedParams.Add(paramEntry.key);
                 }
 
-                if (ParamEditorScreen.EditorMode && p != null)
+                //add common util to add wiki-editor
+                if (ParamEditorScreen.EditorMode && paramEntry.param != null)
                 {
-                    ParamMetaData meta = ParamMetaData.Get(p.AppliedParamdef);
-                    if (meta != null && meta.Wiki == null && ImGui.MenuItem("Add wiki..."))
+                    if (paramEntry.meta != null && paramEntry.meta.Wiki == null && ImGui.MenuItem("Add wiki..."))
                     {
-                        meta.Wiki = "Empty wiki...";
+                        paramEntry.meta.Wiki = "Empty wiki...";
                     }
 
-                    if (meta?.Wiki != null && ImGui.MenuItem("Remove wiki"))
+                    if (paramEntry.meta?.Wiki != null && ImGui.MenuItem("Remove wiki"))
                     {
-                        meta.Wiki = null;
+                        paramEntry.meta.Wiki = null;
                     }
                 }
 
