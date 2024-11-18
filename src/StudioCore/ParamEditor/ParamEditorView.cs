@@ -10,6 +10,7 @@ using System.Numerics;
 using System.Reflection;
 using Veldrid;
 using Octokit;
+using SoapstoneLib.Proto.Internal;
 
 namespace StudioCore.ParamEditor;
 
@@ -630,19 +631,27 @@ public class ParamEditorView
         }
     }
 
+    private record struct ParamRowListEntry(int visibleRowsIndex, bool modified, bool auxModified, bool conflicts, bool selected, Param.Row row);
     private void ParamView_RowList_Entry_Row(bool[] selectionCache, int selectionCacheIndex, string activeParam,
-        List<Param.Row> p, Param.Row r, HashSet<int> vanillaDiffCache,
+        List<Param.Row> visibleRowList, Param.Row r, HashSet<int> vanillaDiffCache,
         List<(HashSet<int>, HashSet<int>)> auxDiffCaches, IParamDecorator decorator, ref float scrollTo,
         bool doFocus, bool isPinned)
     {
         var diffVanilla = vanillaDiffCache.Contains(r.ID);
         var auxDiffVanilla = auxDiffCaches.Where(cache => cache.Item1.Contains(r.ID)).Count() > 0;
-        if (diffVanilla)
+        var auxDiffPrimaryAndVanilla = (auxDiffVanilla ? 1 : 0) + auxDiffCaches.Where(cache => cache.Item1.Contains(r.ID) && cache.Item2.Contains(r.ID)).Count() > 1;
+        var selected = selectionCache != null && selectionCacheIndex < selectionCache.Length ? selectionCache[selectionCacheIndex] : false;
+        ParamRowListEntry e = new ParamRowListEntry(selectionCacheIndex, diffVanilla, auxDiffVanilla, auxDiffPrimaryAndVanilla, selected, r);
+        ParamView_RowList_Entry_Row(e, activeParam, visibleRowList, decorator, ref scrollTo, doFocus, isPinned);
+    }
+    private void ParamView_RowList_Entry_Row(ParamRowListEntry rowEntry, string activeParam, List<Param.Row> p, IParamDecorator decorator, ref float scrollTo, bool doFocus, bool isPinned)
+    {
+        
+        if (rowEntry.modified)
         {
             // If the auxes are changed bu
-            var auxDiffPrimaryAndVanilla = (auxDiffVanilla ? 1 : 0) + auxDiffCaches
-                .Where(cache => cache.Item1.Contains(r.ID) && cache.Item2.Contains(r.ID)).Count() > 1;
-            if (auxDiffVanilla && auxDiffPrimaryAndVanilla)
+            
+            if (rowEntry.auxModified && rowEntry.conflicts)
             {
                 ImGui.PushStyleColorVec4(ImGuiCol.Text, AUXCONFLICTCOLOUR);
             }
@@ -653,7 +662,7 @@ public class ParamEditorView
         }
         else
         {
-            if (auxDiffVanilla)
+            if (rowEntry.auxModified)
             {
                 ImGui.PushStyleColorVec4(ImGuiCol.Text, AUXADDEDCOLOUR);
             }
@@ -663,16 +672,15 @@ public class ParamEditorView
             }
         }
 
-        var selected = selectionCache != null && selectionCacheIndex < selectionCache.Length
-            ? selectionCache[selectionCacheIndex]
-            : false;
+        //Disgusting stateful goto field here.
         if (_gotoParamRow != -1 && !isPinned)
         {
             // Goto row was activated. As soon as a corresponding ID is found, change selection to it.
-            if (r.ID == _gotoParamRow)
+            if (rowEntry.row.ID == _gotoParamRow)
             {
-                selected = true;
-                _selection.SetActiveRow(r, true);
+                //Dodgy to do this here - should be a function of the go-to before entering row iteration. Only scroll should be handled here. Do not want to modify selected flag.
+                rowEntry.selected = true; 
+                _selection.SetActiveRow(rowEntry.row, true);
                 _gotoParamRow = -1;
                 ImGui.SetScrollHereY();
             }
@@ -685,29 +693,29 @@ public class ParamEditorView
             {
                 _paramEditor.GotoSelectedRow = false;
             }
-            else if (activeRow.ID == r.ID)
+            else if (activeRow.ID == rowEntry.row.ID)
             {
                 ImGui.SetScrollHereY();
                 _paramEditor.GotoSelectedRow = false;
             }
         }
 
-        var label = $@"{r.ID} {Utils.ImGuiEscape(r.Name)}";
-        label = Utils.ImGui_WordWrapString(label, ImGui.GetColumnWidth(-1),
-            CFG.Current.Param_DisableLineWrapping ? 1 : 3);
-        if (ImGui.Selectable($@"{label}##{selectionCacheIndex}", selected))
+        var label = $@"{rowEntry.row.ID} {Utils.ImGuiEscape(rowEntry.row.Name)}";
+        label = Utils.ImGui_WordWrapString(label, ImGui.GetColumnWidth(-1), CFG.Current.Param_DisableLineWrapping ? 1 : 3);
+        //Begin selection logic
+        if (ImGui.Selectable($@"{label}##{rowEntry.visibleRowsIndex}", rowEntry.selected))
         {
             _focusRows = true;
             if (InputTracker.GetKey(Key.LControl) || InputTracker.GetKey(Key.RControl))
             {
-                _selection.ToggleRowInSelection(r);
+                _selection.ToggleRowInSelection(rowEntry.row);
             }
             else if (p != null && (InputTracker.GetKey(Key.LShift) || InputTracker.GetKey(Key.RShift)) &&
                      _selection.GetActiveRow() != null)
             {
                 _selection.CleanSelectedRows();
                 var start = p.IndexOf(_selection.GetActiveRow());
-                var end = p.IndexOf(r);
+                var end = p.IndexOf(rowEntry.row);
                 if (start != end && start != -1 && end != -1)
                 {
                     foreach (Param.Row r2 in p.GetRange(start < end ? start : end, Math.Abs(end - start)))
@@ -716,34 +724,34 @@ public class ParamEditorView
                     }
                 }
 
-                _selection.AddRowToSelection(r);
+                _selection.AddRowToSelection(rowEntry.row);
             }
             else
             {
-                _selection.SetActiveRow(r, true);
+                _selection.SetActiveRow(rowEntry.row, true);
             }
         }
 
-        if (_arrowKeyPressed && ImGui.IsItemFocused()
-                             && r != _selection.GetActiveRow())
+        if (_arrowKeyPressed && ImGui.IsItemFocused() && rowEntry.row != _selection.GetActiveRow())
         {
             if (InputTracker.GetKey(Key.ControlLeft) || InputTracker.GetKey(Key.ControlRight))
             {
                 // Add to selection
-                _selection.AddRowToSelection(r);
+                _selection.AddRowToSelection(rowEntry.row);
             }
             else
             {
                 // Exclusive selection
-                _selection.SetActiveRow(r, true);
+                _selection.SetActiveRow(rowEntry.row, true);
             }
 
             _arrowKeyPressed = false;
         }
+        //End Selection logic
 
         ImGui.PopStyleColor(1);
 
-        if (ImGui.BeginPopupContextItem(r.ID.ToString()))
+        if (ImGui.BeginPopupContextItem(rowEntry.row.ID.ToString()))
         {
             if (CFG.Current.Param_ShowHotkeysInContextMenu)
             {
@@ -780,7 +788,7 @@ public class ParamEditorView
                 ImGui.Separator();
             }
 
-            if (ImGui.Selectable((isPinned ? "Unpin " : "Pin ") + r.ID))
+            if (ImGui.Selectable((isPinned ? "Unpin " : "Pin ") + rowEntry.row.ID))
             {
                 if (!_paramEditor._projectSettings.PinnedRows.ContainsKey(activeParam))
                 {
@@ -790,34 +798,33 @@ public class ParamEditorView
                 List<int> pinned = _paramEditor._projectSettings.PinnedRows[activeParam];
                 if (isPinned)
                 {
-                    pinned.Remove(r.ID);
+                    pinned.Remove(rowEntry.row.ID);
                 }
-                else if (!pinned.Contains(r.ID))
+                else if (!pinned.Contains(rowEntry.row.ID))
                 {
-                    pinned.Add(r.ID);
+                    pinned.Add(rowEntry.row.ID);
                 }
             }
             if (isPinned)
             {
-                EditorDecorations.PinListReorderOptions(_paramEditor._projectSettings.PinnedRows[activeParam], r.ID);
+                EditorDecorations.PinListReorderOptions(_paramEditor._projectSettings.PinnedRows[activeParam], rowEntry.row.ID);
             }
             ImGui.Separator();
 
             if (decorator != null)
             {
-                decorator.DecorateContextMenuItems(r);
+                decorator.DecorateContextMenuItems(rowEntry.row);
             }
 
             if (ImGui.Selectable("Compare..."))
             {
-                _selection.SetCompareRow(r);
+                _selection.SetCompareRow(rowEntry.row);
             }
 
-            EditorDecorations.ParamRefReverseLookupSelectables(_paramEditor, ParamBank.PrimaryBank, activeParam,
-                r.ID);
+            EditorDecorations.ParamRefReverseLookupSelectables(_paramEditor, ParamBank.PrimaryBank, activeParam, rowEntry.row.ID);
             if (ImGui.Selectable("Copy ID to clipboard"))
             {
-                PlatformUtils.Instance.SetClipboardText($"{r.ID}");
+                PlatformUtils.Instance.SetClipboardText($"{rowEntry.row.ID}");
             }
 
             ImGui.EndPopup();
@@ -825,10 +832,10 @@ public class ParamEditorView
 
         if (decorator != null)
         {
-            decorator.DecorateParam(r);
+            decorator.DecorateParam(rowEntry.row);
         }
 
-        if (doFocus && _selection.GetActiveRow() == r)
+        if (doFocus && _selection.GetActiveRow() == rowEntry.row)
         {
             scrollTo = ImGui.GetCursorPosY();
         }
