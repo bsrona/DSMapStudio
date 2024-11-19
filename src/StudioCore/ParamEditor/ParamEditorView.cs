@@ -433,6 +433,19 @@ public class ParamEditorView
         UIHints.AddImGuiHintButton("MassEditHint", ref UIHints.SearchBarHint);
     }
 
+    private record struct ParamRowListEntry(int visibleRowsIndex, bool modified, bool auxModified, bool conflicts, bool selected, Param.Row row, string fmgRefText);
+    private ParamRowListEntry getRowListEntryForRow(Param.Row row, HashSet<int> vanillaDiffCache, List<(HashSet<int>, HashSet<int>)> auxDiffCaches, bool[] selectionCachePins, int i, FmgEntryCategory category)
+    {
+        var diffVanilla = vanillaDiffCache.Contains(row.ID);
+        var auxDiffVanilla = auxDiffCaches.Where(cache => cache.Item1.Contains(row.ID)).Count() > 0;
+        var auxDiffPrimaryAndVanilla = (auxDiffVanilla ? 1 : 0) + auxDiffCaches.Where(cache => cache.Item1.Contains(row.ID) && cache.Item2.Contains(row.ID)).Count() > 1;
+        var selected = selectionCachePins != null && i < selectionCachePins.Length ? selectionCachePins[i] : false;
+
+        //Also just be cache-ing this as per the plan
+        string fmgRefText = Locator.ActiveProject.FMGBank.GetFmgEntriesByCategory(category, false).Find((x) => x.ID == row.ID)?.Text;
+
+        return new ParamRowListEntry(i, diffVanilla, auxDiffVanilla, auxDiffPrimaryAndVanilla, selected, row, fmgRefText);
+    }
     private void ParamView_RowList(bool doFocus, bool isActiveView, float scrollTo, string activeParam)
     {
         if (!_selection.ActiveParamExists())
@@ -501,17 +514,7 @@ public class ParamEditorView
                             continue;
                         }
 
-                        var diffVanilla = vanillaDiffCache.Contains(row.ID);
-                        var auxDiffVanilla = auxDiffCaches.Where(cache => cache.Item1.Contains(row.ID)).Count() > 0;
-                        var auxDiffPrimaryAndVanilla = (auxDiffVanilla ? 1 : 0) + auxDiffCaches.Where(cache => cache.Item1.Contains(row.ID) && cache.Item2.Contains(row.ID)).Count() > 1;
-                        var selected = selectionCachePins != null && i < selectionCachePins.Length ? selectionCachePins[i] : false;
-
-                        //Also just be cache-ing this as per the plan
-                        string fmgRefText = Locator.ActiveProject.FMGBank.GetFmgEntriesByCategory(category, false).Find((x) => x.ID == row.ID)?.Text;
-
-                        ParamRowListEntry e = new ParamRowListEntry(i, diffVanilla, auxDiffVanilla, auxDiffPrimaryAndVanilla, selected, row, fmgRefText);
-
-
+                        ParamRowListEntry e = getRowListEntryForRow(row, vanillaDiffCache, auxDiffCaches, selectionCachePins, i, category);
                         lastCol = ParamView_RowList_Entry(i, e, pinnedRowList, activeParam, ref scrollTo, false, true, category, compareCol, compareColProp);
                     }
 
@@ -554,16 +557,8 @@ public class ParamEditorView
                 {
                     Param.Row currentRow = rows[i];
 
-                    var diffVanilla = vanillaDiffCache.Contains(currentRow.ID);
-                    var auxDiffVanilla = auxDiffCaches.Where(cache => cache.Item1.Contains(currentRow.ID)).Count() > 0;
-                    var auxDiffPrimaryAndVanilla = (auxDiffVanilla ? 1 : 0) + auxDiffCaches.Where(cache => cache.Item1.Contains(currentRow.ID) && cache.Item2.Contains(currentRow.ID)).Count() > 1;
-                    var selected = selectionCache != null && i < selectionCache.Length ? selectionCache[i] : false;
-
-                    //Also just be cache-ing this as per the plan
-                    string fmgRefText = Locator.ActiveProject.FMGBank.GetFmgEntriesByCategory(category, false).Find((x) => x.ID == currentRow.ID)?.Text;
-
-                    ParamRowListEntry e = new ParamRowListEntry(i, diffVanilla, auxDiffVanilla, auxDiffPrimaryAndVanilla, selected, currentRow, fmgRefText);
-
+                    ParamRowListEntry e = getRowListEntryForRow(currentRow, vanillaDiffCache, auxDiffCaches, selectionCache, i, category);
+                        
                     if (enableGrouping)
                     {
                         Param.Row prev = i - 1 > 0 ? rows[i - 1] : null;
@@ -655,7 +650,6 @@ public class ParamEditorView
         }
     }
 
-    private record struct ParamRowListEntry(int visibleRowsIndex, bool modified, bool auxModified, bool conflicts, bool selected, Param.Row row, string fmgRefText);
     private void ParamView_RowList_Entry_Row(ParamRowListEntry rowEntry, string activeParam, List<Param.Row> p, ref float scrollTo, bool doFocus, bool isPinned, FmgEntryCategory fmgCategory)
     {
         
