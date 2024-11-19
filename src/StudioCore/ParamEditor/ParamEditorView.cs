@@ -628,7 +628,7 @@ public class ParamEditorView
         }
     }
 
-    private record struct ParamRowListEntry(int visibleRowsIndex, bool modified, bool auxModified, bool conflicts, bool selected, Param.Row row, string fmgRefText);
+    private record struct ParamRowListEntry(int visibleRowsIndex, bool modified, bool auxModified, bool conflicts, bool selected, string imguiTextAndID, Param.Row row, string fmgRefText);
     private void ParamView_RowList_Entry_Row(bool[] selectionCache, int selectionCacheIndex, string activeParam,
         List<Param.Row> visibleRowList, Param.Row r, HashSet<int> vanillaDiffCache,
         List<(HashSet<int>, HashSet<int>)> auxDiffCaches, ref float scrollTo,
@@ -638,6 +638,9 @@ public class ParamEditorView
         var auxDiffVanilla = auxDiffCaches.Where(cache => cache.Item1.Contains(r.ID)).Count() > 0;
         var auxDiffPrimaryAndVanilla = (auxDiffVanilla ? 1 : 0) + auxDiffCaches.Where(cache => cache.Item1.Contains(r.ID) && cache.Item2.Contains(r.ID)).Count() > 1;
         var selected = selectionCache != null && selectionCacheIndex < selectionCache.Length ? selectionCache[selectionCacheIndex] : false;
+        var label = $@"{r.ID} {Utils.ImGuiEscape(r.Name)}";
+        label = Utils.ImGui_WordWrapString(label, ImGui.GetColumnWidth(-1), CFG.Current.Param_DisableLineWrapping ? 1 : 3);
+        label = $@"{label}##{selectionCacheIndex}";
         //Obviously this is a temporary hack and should be moved out of the loop
         var category = FmgEntryCategory.None;
         foreach ((var param, FmgEntryCategory cat) in ParamBank.ParamToFmgCategoryList)
@@ -651,7 +654,7 @@ public class ParamEditorView
         //Also just be cache-ing this as per the plan
         string fmgRefText = Locator.ActiveProject.FMGBank.GetFmgEntriesByCategory(category, false).Find((x) => x.ID == r.ID)?.Text;
 
-        ParamRowListEntry e = new ParamRowListEntry(selectionCacheIndex, diffVanilla, auxDiffVanilla, auxDiffPrimaryAndVanilla, selected, r, fmgRefText);
+        ParamRowListEntry e = new ParamRowListEntry(selectionCacheIndex, diffVanilla, auxDiffVanilla, auxDiffPrimaryAndVanilla, selected, label, r, fmgRefText);
         ParamView_RowList_Entry_Row(e, activeParam, visibleRowList, ref scrollTo, doFocus, isPinned, category);
     }
     private void ParamView_RowList_Entry_Row(ParamRowListEntry rowEntry, string activeParam, List<Param.Row> p, ref float scrollTo, bool doFocus, bool isPinned, FmgEntryCategory fmgCategory)
@@ -710,10 +713,8 @@ public class ParamEditorView
             }
         }
 
-        var label = $@"{rowEntry.row.ID} {Utils.ImGuiEscape(rowEntry.row.Name)}";
-        label = Utils.ImGui_WordWrapString(label, ImGui.GetColumnWidth(-1), CFG.Current.Param_DisableLineWrapping ? 1 : 3);
         //Begin selection logic
-        if (ImGui.Selectable($@"{label}##{rowEntry.visibleRowsIndex}", rowEntry.selected))
+        if (ImGui.Selectable(rowEntry.imguiTextAndID, rowEntry.selected))
         {
             _focusRows = true;
             if (InputTracker.GetKey(Key.LControl) || InputTracker.GetKey(Key.RControl))
