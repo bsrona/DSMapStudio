@@ -628,7 +628,7 @@ public class ParamEditorView
         }
     }
 
-    private record struct ParamRowListEntry(int visibleRowsIndex, bool modified, bool auxModified, bool conflicts, bool selected, string imguiTextAndID, Param.Row row, string fmgRefText);
+    private record struct ParamRowListEntry(int visibleRowsIndex, bool modified, bool auxModified, bool conflicts, bool selected, Param.Row row, string fmgRefText);
     private void ParamView_RowList_Entry_Row(ParamRowListEntry rowEntry, string activeParam, List<Param.Row> p, ref float scrollTo, bool doFocus, bool isPinned, FmgEntryCategory fmgCategory)
     {
         
@@ -685,8 +685,12 @@ public class ParamEditorView
             }
         }
 
+        //I wish I could cache this but wordwrap is a pain
+        var label = $@"{rowEntry.row.ID} {Utils.ImGuiEscape(rowEntry.row.Name)}";
+        label = Utils.ImGui_WordWrapString(label, ImGui.GetColumnWidth(-1), CFG.Current.Param_DisableLineWrapping ? 1 : 3);
+
         //Begin selection logic
-        if (ImGui.Selectable(rowEntry.imguiTextAndID, rowEntry.selected))
+        if (ImGui.Selectable($@"{label}##{rowEntry.visibleRowsIndex}", rowEntry.selected))
         {
             _focusRows = true;
             if (InputTracker.GetKey(Key.LControl) || InputTracker.GetKey(Key.RControl))
@@ -840,9 +844,7 @@ public class ParamEditorView
         var auxDiffVanilla = auxDiffCaches.Where(cache => cache.Item1.Contains(r.ID)).Count() > 0;
         var auxDiffPrimaryAndVanilla = (auxDiffVanilla ? 1 : 0) + auxDiffCaches.Where(cache => cache.Item1.Contains(r.ID) && cache.Item2.Contains(r.ID)).Count() > 1;
         var selected = selectionCache != null && selectionCacheIndex < selectionCache.Length ? selectionCache[selectionCacheIndex] : false;
-        var label = $@"{r.ID} {Utils.ImGuiEscape(r.Name)}";
-        label = Utils.ImGui_WordWrapString(label, ImGui.GetColumnWidth(-1), CFG.Current.Param_DisableLineWrapping ? 1 : 3);
-        label = $@"{label}##{selectionCacheIndex}";
+
         //Obviously this is a temporary hack and should be moved out of the loop
         var category = FmgEntryCategory.None;
         foreach ((var param, FmgEntryCategory cat) in ParamBank.ParamToFmgCategoryList)
@@ -856,7 +858,7 @@ public class ParamEditorView
         //Also just be cache-ing this as per the plan
         string fmgRefText = Locator.ActiveProject.FMGBank.GetFmgEntriesByCategory(category, false).Find((x) => x.ID == r.ID)?.Text;
 
-        ParamRowListEntry e = new ParamRowListEntry(selectionCacheIndex, diffVanilla, auxDiffVanilla, auxDiffPrimaryAndVanilla, selected, label, r, fmgRefText);
+        ParamRowListEntry e = new ParamRowListEntry(selectionCacheIndex, diffVanilla, auxDiffVanilla, auxDiffPrimaryAndVanilla, selected, r, fmgRefText);
 
         var scale = MapStudioNew.GetUIScale();
 

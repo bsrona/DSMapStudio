@@ -894,6 +894,8 @@ public static class Utils
     /// </summary>
     public static string ImGui_WordWrapString(string text, float uiWidth, int maxLines = 3)
     {
+        if (maxLines <= 1)
+            return text;
         var textWidth = ImGui.CalcTextSize(text).X;
 
         // Determine how many line breaks are needed
