@@ -10,16 +10,9 @@ public class ParamEditorSelectionState
     private static string _globalRowSearchString = "";
     private static string _globalPropSearchString = "";
     private readonly Dictionary<string, ParamEditorParamSelectionState> _paramStates = new();
-    private readonly ParamEditorScreen _scr;
-
     private readonly List<(string, Param.Row)> pastStack = new();
     private string _activeParam;
     internal string currentParamSearchString = "";
-
-    public ParamEditorSelectionState(ParamEditorScreen paramEditor)
-    {
-        _scr = paramEditor;
-    }
 
     private void PushHistory(string newParam, Param.Row newRow)
     {
@@ -123,7 +116,7 @@ public class ParamEditorSelectionState
         }
 
         _paramStates[_activeParam].currentRowSearchString = s;
-        _paramStates[_activeParam].selectionCacheDirty = true;
+        UICache.ClearCaches();
     }
 
     public void SetCurrentParamSearchString(string s)
@@ -198,8 +191,7 @@ public class ParamEditorSelectionState
             {
                 Locator.ActiveProject.ParamDiffBank.RefreshParamRowDiffs(s.activeRow, _activeParam);
             }
-
-            s.selectionCacheDirty = true;
+            UICache.ClearCaches();
         }
     }
 
@@ -234,8 +226,7 @@ public class ParamEditorSelectionState
             {
                 s.selectionRows.Add(row);
             }
-
-            s.selectionCacheDirty = true;
+            UICache.ClearCaches();
         }
         //Do not perform vanilla diff here, will be very slow when making large selections
     }
@@ -248,7 +239,7 @@ public class ParamEditorSelectionState
             if (!s.selectionRows.Contains(row))
             {
                 s.selectionRows.Add(row);
-                s.selectionCacheDirty = true;
+                UICache.ClearCaches();
             }
         }
         //Do not perform vanilla diff here, will be very slow when making large selections
@@ -259,7 +250,7 @@ public class ParamEditorSelectionState
         if (_activeParam != null)
         {
             _paramStates[_activeParam].selectionRows.Remove(row);
-            _paramStates[_activeParam].selectionCacheDirty = true;
+            UICache.ClearCaches();
         }
     }
 
@@ -272,8 +263,7 @@ public class ParamEditorSelectionState
             {
                 state.activeRow = null;
             }
-
-            state.selectionCacheDirty = true;
+            UICache.ClearCaches();
         }
     }
 
@@ -286,28 +276,6 @@ public class ParamEditorSelectionState
 
         return _paramStates[_activeParam].selectionRows;
     }
-
-    public bool[] GetSelectionCache(List<Param.Row> rows, string cacheVer)
-    {
-        if (_activeParam == null)
-        {
-            return null;
-        }
-
-        ParamEditorParamSelectionState s = _paramStates[_activeParam];
-        // We maintain this flag as clearing the cache properly is slow for the number of times we modify selection
-        if (s.selectionCacheDirty)
-        {
-            UICache.RemoveCache(_scr, s);
-        }
-
-        return UICache.GetCached(_scr, s, "selectionCache" + cacheVer, () =>
-        {
-            s.selectionCacheDirty = false;
-            return rows.Select(x => GetSelectedRows().Contains(x)).ToArray();
-        });
-    }
-
     public void CleanSelectedRows()
     {
         if (_activeParam != null)
@@ -318,18 +286,13 @@ public class ParamEditorSelectionState
             {
                 s.selectionRows.Add(s.activeRow);
             }
-
-            s.selectionCacheDirty = true;
+            UICache.ClearCaches();
         }
     }
 
     public void CleanAllSelectionState()
     {
-        foreach (ParamEditorParamSelectionState s in _paramStates.Values)
-        {
-            s.selectionCacheDirty = true;
-        }
-
+        UICache.ClearCaches();
         _activeParam = null;
         _paramStates.Clear();
     }
@@ -352,7 +315,5 @@ internal class ParamEditorParamSelectionState
     internal Param.Row compareRow;
     internal string currentPropSearchString = "";
     internal string currentRowSearchString = "";
-    internal bool selectionCacheDirty = true;
-
     internal List<Param.Row> selectionRows = new();
 }

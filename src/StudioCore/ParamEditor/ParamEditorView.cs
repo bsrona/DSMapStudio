@@ -44,7 +44,7 @@ public class ParamEditorView
         _paramEditor = parent;
         _viewIndex = index;
         _propEditor = new ParamRowEditor(parent.EditorActionManager, _paramEditor);
-        _selection = new ParamEditorSelectionState(_paramEditor);
+        _selection = new ParamEditorSelectionState();
     }
 
     private void ParamView_ParamList_Header(bool isActiveView)
@@ -434,12 +434,12 @@ public class ParamEditorView
     }
 
     private record struct ParamRowListEntry(int visibleRowsIndex, bool modified, bool auxModified, bool conflicts, bool selected, Param.Row row, string fmgRefText, bool consecutivePre, bool consecutivePost);
-    private ParamRowListEntry getRowListEntryForRow(Param.Row row, HashSet<int> vanillaDiffCache, List<(HashSet<int>, HashSet<int>)> auxDiffCaches, bool[] selectionCachePins, List<Param.Row> visibleRows, int i, FmgEntryCategory category)
+    private ParamRowListEntry getRowListEntryForRow(Param.Row row, HashSet<int> vanillaDiffCache, List<(HashSet<int>, HashSet<int>)> auxDiffCaches, List<Param.Row> visibleRows, int i, FmgEntryCategory category)
     {
         var diffVanilla = vanillaDiffCache.Contains(row.ID);
         var auxDiffVanilla = auxDiffCaches.Where(cache => cache.Item1.Contains(row.ID)).Count() > 0;
         var auxDiffPrimaryAndVanilla = (auxDiffVanilla ? 1 : 0) + auxDiffCaches.Where(cache => cache.Item1.Contains(row.ID) && cache.Item2.Contains(row.ID)).Count() > 1;
-        var selected = selectionCachePins != null && i < selectionCachePins.Length ? selectionCachePins[i] : false;
+        var selected = (bool)_selection?.GetSelectedRows()?.Contains(row);
 
         string fmgRefText = Locator.ActiveProject.FMGBank.GetFmgEntriesByCategory(category, false).Find((x) => x.ID == row.ID)?.Text;
 
@@ -518,8 +518,7 @@ public class ParamEditorView
 
                 ParamRowListEntry[] entriesPins = UICache.GetCached(_paramEditor, (_viewIndex, activeParam), "entriesPinned", () =>
                 {
-                    var selectionCachePins = _selection.GetSelectionCache(pinnedRowList, "pinned");
-                    return pinnedRowList.Select((row, i) => getRowListEntryForRow(row, vanillaDiffCache, auxDiffCaches, selectionCachePins, pinnedRowList, i, category)).ToArray();
+                    return pinnedRowList.Select((row, i) => getRowListEntryForRow(row, vanillaDiffCache, auxDiffCaches, pinnedRowList, i, category)).ToArray();
                 });
                 if (entriesPins.Length != 0)
                 {
@@ -564,9 +563,7 @@ public class ParamEditorView
 
                 ParamRowListEntry[] entries = UICache.GetCached(_paramEditor, (_viewIndex, activeParam), "entries", () =>
                 {
-                    // Rows
-                    var selectionCache = _selection.GetSelectionCache(rows, "regular");
-                    return rows.Select((row, i) => getRowListEntryForRow(row, vanillaDiffCache, auxDiffCaches, selectionCache, rows, i, category)).ToArray();
+                    return rows.Select((row, i) => getRowListEntryForRow(row, vanillaDiffCache, auxDiffCaches, rows, i, category)).ToArray();
                 });
                 foreach (ParamRowListEntry e in entries)
                 {                        
