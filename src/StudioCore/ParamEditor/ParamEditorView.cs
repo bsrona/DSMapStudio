@@ -433,18 +433,32 @@ public class ParamEditorView
         UIHints.AddImGuiHintButton("MassEditHint", ref UIHints.SearchBarHint);
     }
 
-    private record struct ParamRowListEntry(int visibleRowsIndex, bool modified, bool auxModified, bool conflicts, bool selected, Param.Row row, string fmgRefText);
-    private ParamRowListEntry getRowListEntryForRow(Param.Row row, HashSet<int> vanillaDiffCache, List<(HashSet<int>, HashSet<int>)> auxDiffCaches, bool[] selectionCachePins, int i, FmgEntryCategory category)
+    private record struct ParamRowListEntry(int visibleRowsIndex, bool modified, bool auxModified, bool conflicts, bool selected, Param.Row row, string fmgRefText, bool consecutivePre, bool consecutivePost);
+    private ParamRowListEntry getRowListEntryForRow(Param.Row row, HashSet<int> vanillaDiffCache, List<(HashSet<int>, HashSet<int>)> auxDiffCaches, bool[] selectionCachePins, List<Param.Row> visibleRows, int i, FmgEntryCategory category)
     {
         var diffVanilla = vanillaDiffCache.Contains(row.ID);
         var auxDiffVanilla = auxDiffCaches.Where(cache => cache.Item1.Contains(row.ID)).Count() > 0;
         var auxDiffPrimaryAndVanilla = (auxDiffVanilla ? 1 : 0) + auxDiffCaches.Where(cache => cache.Item1.Contains(row.ID) && cache.Item2.Contains(row.ID)).Count() > 1;
         var selected = selectionCachePins != null && i < selectionCachePins.Length ? selectionCachePins[i] : false;
 
-        //Also just be cache-ing this as per the plan
         string fmgRefText = Locator.ActiveProject.FMGBank.GetFmgEntriesByCategory(category, false).Find((x) => x.ID == row.ID)?.Text;
 
-        return new ParamRowListEntry(i, diffVanilla, auxDiffVanilla, auxDiffPrimaryAndVanilla, selected, row, fmgRefText);
+        var consecutivePre = false;
+        var consecutivePost = false;
+        Param.Row prev = i - 1 > 0 ? visibleRows[i - 1] : null;
+        Param.Row next = i + 1 < visibleRows.Count ? visibleRows[i + 1] : null;
+        if (prev != null && next != null && prev.ID + 1 != row.ID &&
+            row.ID + 1 == next.ID)
+        {
+            consecutivePre = true;
+        }
+        if (prev != null && next != null && prev.ID + 1 == row.ID &&
+            row.ID + 1 != next.ID)
+        {
+            consecutivePost = true;
+        }
+
+        return new ParamRowListEntry(i, diffVanilla, auxDiffVanilla, auxDiffPrimaryAndVanilla, selected, row, fmgRefText, consecutivePre, consecutivePost);
     }
     private void ParamView_RowList(bool doFocus, bool isActiveView, float scrollTo, string activeParam)
     {
@@ -514,7 +528,7 @@ public class ParamEditorView
                             continue;
                         }
 
-                        ParamRowListEntry e = getRowListEntryForRow(row, vanillaDiffCache, auxDiffCaches, selectionCachePins, i, category);
+                        ParamRowListEntry e = getRowListEntryForRow(row, vanillaDiffCache, auxDiffCaches, selectionCachePins, pinnedRowList, i, category);
                         lastCol = ParamView_RowList_Entry(i, e, pinnedRowList, activeParam, ref scrollTo, false, true, category, compareCol, compareColProp);
                     }
 
@@ -557,28 +571,16 @@ public class ParamEditorView
                 {
                     Param.Row currentRow = rows[i];
 
-                    ParamRowListEntry e = getRowListEntryForRow(currentRow, vanillaDiffCache, auxDiffCaches, selectionCache, i, category);
+                    ParamRowListEntry e = getRowListEntryForRow(currentRow, vanillaDiffCache, auxDiffCaches, selectionCache, rows, i, category);
                         
-                    if (enableGrouping)
+                    if (enableGrouping && e.consecutivePre)
                     {
-                        Param.Row prev = i - 1 > 0 ? rows[i - 1] : null;
-                        Param.Row next = i + 1 < rows.Count ? rows[i + 1] : null;
-                        if (prev != null && next != null && prev.ID + 1 != currentRow.ID &&
-                            currentRow.ID + 1 == next.ID)
-                        {
-                            EditorDecorations.ImguiTableSeparator();
-                        }
-
-                        ParamView_RowList_Entry(i, e, rows, activeParam, ref scrollTo, doFocus, false, category, compareCol, compareColProp);
-                        if (prev != null && next != null && prev.ID + 1 == currentRow.ID &&
-                            currentRow.ID + 1 != next.ID)
-                        {
-                            EditorDecorations.ImguiTableSeparator();
-                        }
+                        EditorDecorations.ImguiTableSeparator();
                     }
-                    else
+                    ParamView_RowList_Entry(i, e, rows, activeParam, ref scrollTo, doFocus, false, category, compareCol, compareColProp);
+                    if (enableGrouping && e.consecutivePost)
                     {
-                        ParamView_RowList_Entry(i, e, rows, activeParam, ref scrollTo, doFocus, false, category, compareCol, compareColProp);
+                        EditorDecorations.ImguiTableSeparator();
                     }
                 }
 
