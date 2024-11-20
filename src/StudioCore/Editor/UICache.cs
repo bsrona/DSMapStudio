@@ -7,6 +7,7 @@ namespace StudioCore.Editor;
 public class UICache
 {
     private static readonly Dictionary<(EditorScreen, object, string), object> caches = new();
+    private static bool clear = false;
 
     /// <summary>
     ///     Gets/Sets a cache. The cached data is intended to have a lifetime until the contextual object is modified, or the
@@ -14,6 +15,10 @@ public class UICache
     /// </summary>
     public static T GetCached<T>(EditorScreen UIScreen, object context, Func<T> getValue)
     {
+        if (clear) {
+            caches.Clear();
+            clear = false;
+        }
         return GetCached(UIScreen, context, "", getValue);
     }
 
@@ -23,6 +28,10 @@ public class UICache
     /// </summary>
     public static T GetCached<T>(EditorScreen UIScreen, object context, string key, Func<T> getValue)
     {
+        if (clear) {
+            caches.Clear();
+            clear = false;
+        }
         (EditorScreen UIScreen, object context, string key) trueKey = (UIScreen, context, key);
         if (!caches.TryGetValue(trueKey, out var value))
         {
@@ -64,6 +73,6 @@ public class UICache
     /// </summary>
     public static void ClearCaches()
     {
-        caches.Clear();
+        clear = true;
     }
 }
