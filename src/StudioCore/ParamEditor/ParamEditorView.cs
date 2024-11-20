@@ -492,7 +492,7 @@ public class ParamEditorView
             if (EditorDecorations.ImGuiTableStdColumns("rowList", compareCol == null ? 1 : 2, false))
             {
                 List<Param.Row> pinnedRowList = _paramEditor._projectSettings.PinnedRows
-                    .GetValueOrDefault(activeParam, new List<int>()).Select(id => para[id]).ToList();
+                    .GetValueOrDefault(activeParam, new List<int>()).Select(id => para[id]).Where((x) => x != null).ToList();
 
                 ImGui.TableSetupColumn("rowCol", ImGuiTableColumnFlags.None, 1f);
                 if (compareCol != null)
@@ -516,20 +516,17 @@ public class ParamEditorView
 
                 ImGui.PushID("pinned");
 
-                var selectionCachePins = _selection.GetSelectionCache(pinnedRowList, "pinned");
-                if (pinnedRowList.Count != 0)
+                ParamRowListEntry[] entriesPins = UICache.GetCached(_paramEditor, (_viewIndex, activeParam), "entriesPinned", () =>
+                {
+                    var selectionCachePins = _selection.GetSelectionCache(pinnedRowList, "pinned");
+                    return pinnedRowList.Select((row, i) => getRowListEntryForRow(row, vanillaDiffCache, auxDiffCaches, selectionCachePins, pinnedRowList, i, category)).ToArray();
+                });
+                if (entriesPins.Length != 0)
                 {
                     var lastCol = false;
-                    for (var i = 0; i < pinnedRowList.Count(); i++)
+                    foreach (ParamRowListEntry e in entriesPins)
                     {
-                        Param.Row row = pinnedRowList[i];
-                        if (row == null)
-                        {
-                            continue;
-                        }
-
-                        ParamRowListEntry e = getRowListEntryForRow(row, vanillaDiffCache, auxDiffCaches, selectionCachePins, pinnedRowList, i, category);
-                        lastCol = ParamView_RowList_Entry(i, e, pinnedRowList, activeParam, ref scrollTo, false, true, category, compareCol, compareColProp);
+                        lastCol = ParamView_RowList_Entry(e, pinnedRowList, activeParam, ref scrollTo, false, true, category, compareCol, compareColProp);
                     }
 
                     if (lastCol)
@@ -565,19 +562,19 @@ public class ParamEditorView
                 var enableGrouping = !CFG.Current.Param_DisableRowGrouping && ParamMetaData
                     .Get(ParamBank.PrimaryBank.Params[activeParam].AppliedParamdef).ConsecutiveIDs;
 
-                // Rows
-                var selectionCache = _selection.GetSelectionCache(rows, "regular");
-                for (var i = 0; i < rows.Count; i++)
+                ParamRowListEntry[] entries = UICache.GetCached(_paramEditor, (_viewIndex, activeParam), "entries", () =>
                 {
-                    Param.Row currentRow = rows[i];
-
-                    ParamRowListEntry e = getRowListEntryForRow(currentRow, vanillaDiffCache, auxDiffCaches, selectionCache, rows, i, category);
-                        
+                    // Rows
+                    var selectionCache = _selection.GetSelectionCache(rows, "regular");
+                    return rows.Select((row, i) => getRowListEntryForRow(row, vanillaDiffCache, auxDiffCaches, selectionCache, rows, i, category)).ToArray();
+                });
+                foreach (ParamRowListEntry e in entries)
+                {                        
                     if (enableGrouping && e.consecutivePre)
                     {
                         EditorDecorations.ImguiTableSeparator();
                     }
-                    ParamView_RowList_Entry(i, e, rows, activeParam, ref scrollTo, doFocus, false, category, compareCol, compareColProp);
+                    ParamView_RowList_Entry(e, rows, activeParam, ref scrollTo, doFocus, false, category, compareCol, compareColProp);
                     if (enableGrouping && e.consecutivePost)
                     {
                         EditorDecorations.ImguiTableSeparator();
@@ -857,7 +854,7 @@ public class ParamEditorView
         }
     }
 
-    private bool ParamView_RowList_Entry(int visibleRowsIndex, ParamRowListEntry rowListEntry,
+    private bool ParamView_RowList_Entry(ParamRowListEntry rowListEntry,
         List<Param.Row> p, string activeParam, ref float scrollTo, bool doFocus, bool isPinned,
         FmgEntryCategory fmgEntryCategory, Param.Column compareCol, PropertyInfo compareColProp)
     {
@@ -883,7 +880,7 @@ public class ParamEditorView
             {
                 Param.Cell c = rowListEntry.row[compareCol];
                 object newval = null;
-                ImGui.PushID("compareCol_" + visibleRowsIndex);
+                ImGui.PushID("compareCol_" + rowListEntry.visibleRowsIndex);
                 ImGui.PushStyleVarVec2(ImGuiStyleVar.FramePadding, new Vector2(0, 0));
                 ParamEditorCommon.PropertyField(compareCol.ValueType, c.Value, ref newval, false);
                 if (ParamEditorCommon.UpdateProperty(_propEditor.ContextActionManager, c, compareColProp,
