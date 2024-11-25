@@ -283,12 +283,12 @@ public class ParamRowEditor
             col.Item2,
             selection);
     }
-    private record struct PropertyRowEntry(int index, FieldInfoEntry field, CellInfoEntry cell, CellInfoEntry compare, CellInfoEntry vanilla, CellInfoEntry[] aux);
+    private record struct PropertyRowEntry(int index, FieldInfoEntry field, CellInfoEntry cell, CellInfoEntry vanilla, CellInfoEntry[] aux, CellInfoEntry compare);
     private record struct FieldInfoEntry(Param.Column? col, FieldMetaData meta, Type propType, PropertyInfo proprow,
         string displayText, string internalName, string wiki,
-        string inactiveParamRefText, string activeParamRefText,
-        string inactiveFmgRefText, string activeFmgRefText,
-        string enumText,
+        bool isParamRef, string inactiveParamRefText, string activeParamRefText,
+        bool isFMGRef, string inactiveFmgRefText, string activeFmgRefText,
+        bool isEnum, string enumText,
         string extRefText, string virtualRef, bool displayBool,
         bool isRef);
     private record struct CellInfoEntry(Param.Row row, Param.Cell? nullableCell,
@@ -351,7 +351,7 @@ public class ParamRowEditor
             bool anyItem = false;
             ImGui.BeginGroup();
             //Generify decorations like these
-            if (!CFG.Current.Param_HideReferenceRows && field.meta?.RefTypes != null && field.meta?.RefTypes.Count > 0)
+            if (!CFG.Current.Param_HideReferenceRows && field.isParamRef)
             {
                 ImGui.PushStyleVarVec2(ImGuiStyleVar.ItemSpacing, new Vector2(0, 0));
                 ImGui.PushStyleColorVec4(ImGuiCol.Text, new Vector4(1.0f, 1.0f, 0.0f, 1.0f));
@@ -367,7 +367,7 @@ public class ParamRowEditor
                 anyItem = true;
             }
 
-            if (!CFG.Current.Param_HideReferenceRows && field.meta?.FmgRef != null && field.meta?.FmgRef.Count > 0)
+            if (!CFG.Current.Param_HideReferenceRows && field.isFMGRef)
             {
                 ImGui.PushStyleVarVec2(ImGuiStyleVar.ItemSpacing, new Vector2(0, 0));
                 ImGui.PushStyleColorVec4(ImGuiCol.Text, new Vector4(1.0f, 1.0f, 0.0f, 1.0f));
@@ -383,7 +383,7 @@ public class ParamRowEditor
                 anyItem = true;
             }
 
-            if (!CFG.Current.Param_HideEnums && field.meta?.EnumType != null)
+            if (!CFG.Current.Param_HideEnums && field.isEnum)
             {
                 ImGui.PushStyleColorVec4(ImGuiCol.Text, new Vector4(1.0f, 1.0f, 0.0f, 1.0f));
                 ImGui.TextUnformatted($@"   {field.enumText}");
@@ -531,7 +531,7 @@ public class ParamRowEditor
     {
         ImGui.BeginGroup();
         bool anyItem = false;
-        if (!CFG.Current.Param_HideReferenceRows && field.meta?.RefTypes != null)
+        if (!CFG.Current.Param_HideReferenceRows && field.isParamRef)
         {
             if (cell.paramRefText != null)
             {
@@ -547,7 +547,7 @@ public class ParamRowEditor
             anyItem = true;
         }
 
-        if (!CFG.Current.Param_HideReferenceRows && field.meta?.FmgRef != null)
+        if (!CFG.Current.Param_HideReferenceRows && field.isFMGRef)
         {
             if (cell.fmgRefText != null) //Original technically also denies whitespace-only entries
             {
@@ -563,7 +563,7 @@ public class ParamRowEditor
             anyItem = true;
         }
 
-        if (!CFG.Current.Param_HideEnums && field.meta?.EnumType != null)
+        if (!CFG.Current.Param_HideEnums && field.isEnum)
         {
             if (cell.enumText != null)
             {
