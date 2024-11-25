@@ -37,6 +37,7 @@ public static class TaskLogs
     }
 
     private static volatile List<LogEntry> _log = new();
+    //TODO MAKE THIS FUCKER THREADSAFE WHAT THE FUCK
     private static volatile HashSet<string> _warningList = new();
 
     private static volatile LogEntry _lastLogEntry;

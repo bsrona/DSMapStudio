@@ -6,6 +6,8 @@ using System.Linq;
 
 namespace StudioCore.ParamEditor;
 
+//TODO MAKE THIS ACTUALLY GAME DEPENDENT AND NOT FAKING IT
+
 /// <summary>
 ///     Utilities for dealing with global paramdefs for a game
 /// </summary>
