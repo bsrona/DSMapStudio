@@ -87,7 +87,7 @@ public interface EditorScreen
 
     public bool IsEnabled(Project project)
     {
-        return StudioResource.AreResourcesLoaded(GetDependencies(project));
+        return project != null && StudioResource.AreResourcesLoaded(GetDependencies(project));
     }
     public void Load(Project project)
     {

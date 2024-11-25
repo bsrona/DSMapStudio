@@ -405,9 +405,16 @@ public class MapStudioNew
 
     private void ChangeProjectSettings(ProjectSettings newsettings, string moddir, NewProjectOptions options)
     {
+        bool changedGame = false;
+        if (_projectSettings?.GameType != newsettings.GameType)
+            changedGame = true;
+
         _projectSettings = newsettings;
         Locator.ActiveProject = new Project(newsettings, moddir);
         _settingsMenu.ProjSettings = _projectSettings;
+
+        if (changedGame)
+            ResDirectory.CurrentGame = new();
 
         // Banks
         ModelAliasBank.Bank.ReloadAliasBank();
@@ -586,8 +593,7 @@ public class MapStudioNew
                 }
             }
 
-            _projectSettings = settings;
-            ChangeProjectSettings(_projectSettings, Path.GetDirectoryName(filename), options);
+            ChangeProjectSettings(settings, Path.GetDirectoryName(filename), options);
             _context.Window.Title = $"{_programTitle}  -  {_projectSettings.ProjectName}";
 
             CFG.RecentProject recent = new()
