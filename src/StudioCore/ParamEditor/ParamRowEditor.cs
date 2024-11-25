@@ -283,6 +283,312 @@ public class ParamRowEditor
             col.Item2,
             selection);
     }
+    private record struct PropertyRowEntry(int index, FieldInfoEntry field, CellInfoEntry cell, CellInfoEntry compare, CellInfoEntry vanilla, CellInfoEntry[] aux);
+    private record struct FieldInfoEntry(Param.Column? col, FieldMetaData meta, Type propType, PropertyInfo proprow,
+        string displayText, string internalName, string wiki,
+        string inactiveParamRefText, string activeParamRefText,
+        string inactiveFmgRefText, string activeFmgRefText,
+        string enumText,
+        string extRefText, string virtualRef, bool displayBool,
+        bool isRef);
+    private record struct CellInfoEntry(Param.Row row, Param.Cell? nullableCell,
+        object oldval,
+        string paramRefText,
+        string fmgRefText,
+        string enumText,
+        bool diffVanilla, bool conflictOrDiffPrimary, bool matchDefault);
+
+    private void PropEditorPropRow(ParamBank bank, ref PropertyRowEntry entry, string activeParam, bool isPinned, ParamEditorSelectionState selection)
+    {
+        ImGui.PushID(entry.index);
+
+        FieldInfoEntry field = entry.field;
+
+        //ENTRY.FIELD
+        if (ImGui.TableNextColumn())
+        {
+            ImGui.AlignTextToFramePadding();
+            if (field.wiki != null)
+            {
+                string wiki = field.wiki; //Stupid pinning
+                if (EditorDecorations.HelpIcon(field.internalName, ref wiki, true))
+                {
+                    field.meta.Wiki = wiki;
+                }
+
+                ImGui.SameLine();
+            }
+            else
+            {
+                ImGui.Text(" ");
+                ImGui.SameLine();
+            }
+
+            ImGui.Selectable("", false, ImGuiSelectableFlags.AllowOverlap);
+            if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
+            {
+                ImGui.OpenPopup("ParamRowCommonMenu");
+            }
+
+            ImGui.SameLine();
+
+            //Field name
+            if (ParamEditorScreen.EditorMode && field.meta != null)
+            {
+                string altName = field.meta.AltName;
+                ImGui.InputText("##editName", ref altName, 128);
+                if (ImGui.IsItemDeactivatedAfterEdit())
+                {
+                    field.meta.AltName = altName == field.internalName ? null : altName;
+                }
+            }
+            else
+            {
+                ImGui.TextUnformatted(field.displayText);
+            }
+
+            //Ref lines
+            bool anyItem = false;
+            ImGui.BeginGroup();
+            //Generify decorations like these
+            if (!CFG.Current.Param_HideReferenceRows && field.meta?.RefTypes != null && field.meta?.RefTypes.Count > 0)
+            {
+                ImGui.PushStyleVarVec2(ImGuiStyleVar.ItemSpacing, new Vector2(0, 0));
+                ImGui.PushStyleColorVec4(ImGuiCol.Text, new Vector4(1.0f, 1.0f, 0.0f, 1.0f));
+                ImGui.TextUnformatted(@"   <");
+                ImGui.TextUnformatted(field.activeParamRefText);
+                ImGui.PushStyleColorVec4(ImGuiCol.Text, new Vector4(0.7f, 0.7f, 0.7f, 1.0f));
+                ImGui.TextUnformatted(field.inactiveParamRefText);
+                ImGui.PopStyleColor(1);
+                ImGui.SameLine();
+                ImGui.TextUnformatted(">");
+                ImGui.PopStyleColor(1);
+                ImGui.PopStyleVar(1);
+                anyItem = true;
+            }
+
+            if (!CFG.Current.Param_HideReferenceRows && field.meta?.FmgRef != null && field.meta?.FmgRef.Count > 0)
+            {
+                ImGui.PushStyleVarVec2(ImGuiStyleVar.ItemSpacing, new Vector2(0, 0));
+                ImGui.PushStyleColorVec4(ImGuiCol.Text, new Vector4(1.0f, 1.0f, 0.0f, 1.0f));
+                ImGui.TextUnformatted(@"   [");
+                ImGui.TextUnformatted(field.activeFmgRefText);
+                ImGui.PushStyleColorVec4(ImGuiCol.Text, new Vector4(0.7f, 0.7f, 0.7f, 1.0f));
+                ImGui.TextUnformatted(field.inactiveFmgRefText);
+                ImGui.PopStyleColor(1);
+                ImGui.SameLine();
+                ImGui.TextUnformatted("]");
+                ImGui.PopStyleColor(1);
+                ImGui.PopStyleVar(1);
+                anyItem = true;
+            }
+
+            if (!CFG.Current.Param_HideEnums && field.meta?.EnumType != null)
+            {
+                ImGui.PushStyleColorVec4(ImGuiCol.Text, new Vector4(1.0f, 1.0f, 0.0f, 1.0f));
+                ImGui.TextUnformatted($@"   {field.enumText}");
+                ImGui.PopStyleColor(1);
+                anyItem = true;
+            }
+
+            ImGui.EndGroup();
+            if (anyItem && ImGui.IsItemClicked(ImGuiMouseButton.Right))
+            {
+                ImGui.OpenPopup("ParamRowCommonMenu");
+            }
+        }
+
+        object newval = null;
+        //ENTRY.CELL
+        CellInfoEntry cell = entry.cell;
+        if (ImGui.TableNextColumn())
+        {
+            if (cell.conflictOrDiffPrimary)
+            {
+                ImGui.PushStyleColorVec4(ImGuiCol.FrameBg, new Vector4(0.25f, 0.2f, 0.2f, 1.0f));
+            }
+            else if (cell.diffVanilla)
+            {
+                ImGui.PushStyleColorVec4(ImGuiCol.FrameBg, new Vector4(0.2f, 0.22f, 0.2f, 1.0f));
+            }
+
+            if (field.isRef)
+            {
+                ImGui.PushStyleColorVec4(ImGuiCol.Text, new Vector4(1.0f, 0.5f, 1.0f, 1.0f));
+            }
+            else if (cell.matchDefault)
+            {
+                ImGui.PushStyleColorVec4(ImGuiCol.Text, new Vector4(0.75f, 0.75f, 0.75f, 1.0f));
+            }
+            ParamEditorCommon.PropertyField(field.propType, cell.oldval, ref newval, field.displayBool);
+            if (field.isRef || cell.matchDefault) //if diffVanilla, remove styling later
+            {
+                ImGui.PopStyleColor(1);
+            }
+
+            if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
+            {
+                ImGui.OpenPopup("ParamRowCommonMenu");
+            }
+
+            ColumnReferences(ref field, ref cell, bank, true);
+
+            if (cell.conflictOrDiffPrimary || cell.diffVanilla)
+            {
+                ImGui.PopStyleColor(1);
+            }
+        }
+
+        if (cell.conflictOrDiffPrimary)
+        {
+            ImGui.PushStyleColorVec4(ImGuiCol.FrameBg, new Vector4(0.25f, 0.2f, 0.2f, 1.0f));
+        }
+
+        //VANILLA
+        CellInfoEntry vanilla = entry.vanilla;
+        ImGui.PushStyleColorVec4(ImGuiCol.FrameBg, new Vector4(0.180f, 0.180f, 0.196f, 1.0f));
+        ImGui.PushStyleColorVec4(ImGuiCol.Text, new Vector4(0.9f, 0.9f, 0.9f, 1.0f));
+
+        if (CFG.Current.Param_ShowVanillaParams && vanilla != null && ImGui.TableNextColumn())
+        {
+            AdditionalColumnValue(ref field, ref vanilla, bank, @$"colvalvanilla");
+        }
+
+        //AUX
+        for (var i = 0; i < entry.aux.Length; i++)
+        {
+            CellInfoEntry aux = entry.aux[i];
+            if (ImGui.TableNextColumn())
+            {
+                if (!cell.conflictOrDiffPrimary && aux.diffVanilla)
+                {
+                    ImGui.PushStyleColorVec4(ImGuiCol.FrameBg, new Vector4(0.2f, 0.2f, 0.35f, 1.0f));
+                }
+                AdditionalColumnValue(ref field, ref aux, bank, @$"colval{i}");
+                if (!cell.conflictOrDiffPrimary && aux.diffVanilla)
+                {
+                    ImGui.PopStyleColor(1);
+                }
+            }
+        }
+        if (cell.conflictOrDiffPrimary)
+        {
+            ImGui.PopStyleColor(1);
+        }
+
+        //COMPARE
+        CellInfoEntry compare = entry.compare;
+        if (compare != null && ImGui.TableNextColumn())
+        {
+            if (compare.conflictOrDiffPrimary)
+            {
+                ImGui.PushStyleColorVec4(ImGuiCol.FrameBg, new Vector4(0.2f, 0.2f, 0.35f, 1.0f));
+            }
+            AdditionalColumnValue(ref field, ref compare, bank, @$"colvalcompRow");
+            if (compare.conflictOrDiffPrimary)
+            {
+                ImGui.PopStyleColor(1);
+            }
+        }
+
+        ImGui.PopStyleColor(2);
+
+        if (ImGui.BeginPopup("ParamRowCommonMenu"))
+        {
+            PropertyRowNameContextMenuItems(bank, field.internalName, field.meta, activeParam, activeParam != null,
+                isPinned, field.col, selection, field.propType, field.wiki, cell.oldval);
+            PropertyRowValueContextMenuItems(bank, cell.row, field.internalName, field.meta?.VirtualRef, field.meta?.ExtRefs, cell.oldval, ref newval,
+                field.meta?.RefTypes, field.meta?.FmgRef, field.meta?.EnumType);
+            ImGui.EndPopup();
+        }
+
+        //Note here newval isn't passed in. This is because ParamEditorCommon actually caches it
+        //This saves it from reversion if this edit is triggered before the imgui for this field is called
+        var committed = ParamEditorCommon.UpdateProperty(ContextActionManager,
+            cell.nullableCell != null ? cell.nullableCell : cell.row, field.proprow, cell.oldval);
+        if (committed && ParamBank.VanillaBank.IsLoaded)
+        {
+            Locator.ActiveProject.ParamDiffBank.RefreshParamRowDiffs(cell.row, activeParam);
+        }
+
+        ImGui.PopID();
+    }
+
+    private void AdditionalColumnValue(ref FieldInfoEntry field, ref CellInfoEntry cell, ParamBank bank, string imguiElemName)
+    {
+        //Real case any more?
+        if (cell.oldval == null)
+        {
+            ImGui.TextUnformatted("");
+            return;
+        }
+        string value = cell.oldval.ToParamEditorString();
+        ImGui.InputText(imguiElemName, ref value, 256, ImGuiInputTextFlags.ReadOnly);
+        ColumnReferences(ref field, ref cell, bank, false);
+    }
+
+    private void ColumnReferences(ref FieldInfoEntry field, ref CellInfoEntry cell, ParamBank bank, bool allowClickForPopup)
+    {
+        ImGui.BeginGroup();
+        bool anyItem = false;
+        if (!CFG.Current.Param_HideReferenceRows && field.meta?.RefTypes != null)
+        {
+            if (cell.paramRefText != null)
+            {
+                ImGui.PushStyleColorVec4(ImGuiCol.Text, new Vector4(1.0f, 0.5f, 0.5f, 1.0f));
+                ImGui.TextUnformatted(cell.paramRefText);
+            }
+            else
+            {
+                ImGui.PushStyleColorVec4(ImGuiCol.Text, new Vector4(0.0f, 0.0f, 0.0f, 1.0f));
+                ImGui.TextUnformatted("___");
+            }
+            ImGui.PopStyleColor(1);
+            anyItem = true;
+        }
+
+        if (!CFG.Current.Param_HideReferenceRows && field.meta?.FmgRef != null)
+        {
+            if (cell.fmgRefText != null) //Original technically also denies whitespace-only entries
+            {
+                ImGui.PushStyleColorVec4(ImGuiCol.Text, new Vector4(1.0f, 0.5f, 0.5f, 1.0f));
+                ImGui.TextUnformatted(cell.fmgRefText);
+            }
+            else
+            {
+                ImGui.PushStyleColorVec4(ImGuiCol.Text, new Vector4(0.0f, 0.0f, 0.0f, 1.0f));
+                ImGui.TextUnformatted("%null%");
+            }
+            ImGui.PopStyleColor(1);
+            anyItem = true;
+        }
+
+        if (!CFG.Current.Param_HideEnums && field.meta?.EnumType != null)
+        {
+            if (cell.enumText != null)
+            {
+                ImGui.PushStyleColorVec4(ImGuiCol.Text, new Vector4(1.0f, 0.5f, 0.5f, 1.0f));
+                ImGui.TextUnformatted(cell.enumText);
+            }
+            else
+            {
+                ImGui.PushStyleColorVec4(ImGuiCol.Text, new Vector4(0.0f, 0.0f, 0.0f, 1.0f));
+                ImGui.TextUnformatted("Not Enumerated");
+            }
+            ImGui.PopStyleColor(1);
+            anyItem = true;
+        }
+        ImGui.EndGroup();
+        if (anyItem)
+        {
+            //Todo avoid dereferencing these before determining a click has occurred
+            EditorDecorations.ParamRefEnumQuickLink(bank, cell.oldval, field.meta?.RefTypes, cell.row, field.meta?.FmgRef, field.meta?.EnumType);
+            if (allowClickForPopup && ImGui.IsItemClicked(ImGuiMouseButton.Right))
+            {
+                ImGui.OpenPopup("ParamRowCommonMenu");
+            }
+        }
+    }
 
     private void PropEditorPropRow(ParamBank bank, object oldval, object compareval, object vanillaval,
         List<object> auxVals, ref int imguiId, string fieldOffset, string internalName, FieldMetaData cellMeta,
