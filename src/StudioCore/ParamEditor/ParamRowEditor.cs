@@ -145,6 +145,103 @@ public class ParamRowEditor
         }
     }
 
+    public void PropEditorParamRowNew(ParamBank bank, Param.Row row, Param.Row vrow, List<(string, Param.Row)> auxRows, Param.Row crow, ref string propSearchString, string activeParam, bool isActiveView, ParamEditorSelectionState selection)
+    {
+        PropertyRowEntry[] propertyRowsHeader = [];//TODO
+        PropertyRowEntry[] propertyRowsPinned = [];//TODO
+        PropertyRowEntry[] propertyRows = [];//TODO
+
+        ParamMetaData meta = ParamMetaData.Get(row.Def);
+
+        var imguiId = 0;
+        var showVanilla = CFG.Current.Param_ShowVanillaParams;
+        var showParamCompare = auxRows.Count > 0;
+        var showRowCompare = crow != null;
+        var showColumnHeaders = showParamCompare;
+        
+        float fieldDataHeight = meta.CalcCorrectDef != null || meta.SoulCostDef != null ? ImGui.GetWindowHeight() * 3/5f : -1;
+        if (ImGui.BeginChild("regularFieldData", new Vector2(-1, fieldDataHeight), ImGuiChildFlags.AlwaysAutoResize))
+        {
+            PropEditorParamRow_Header(isActiveView, ref propSearchString);
+            var columnCount = 2;
+            if (showVanilla)
+            {
+                columnCount++;
+            }
+            if (showParamCompare)
+            {
+                columnCount += auxRows.Count;
+            }
+            if (showRowCompare)
+            {
+                columnCount++;
+            }
+
+            if (EditorDecorations.ImGuiTableStdColumns("ParamFieldsT", columnCount, false))
+            {                
+                ImGui.TableSetupScrollFreeze(columnCount, (showColumnHeaders ? 1 : 0) + propertyRowsHeader.Length + (1 + propertyRowsPinned?.Length ?? 0));
+                if (showColumnHeaders)
+                {
+                    ImGui.TableNextColumn();
+                    if (ImGui.TableNextColumn())
+                    {
+                        ImGui.Text("Current");
+                    }
+                    if (CFG.Current.Param_ShowVanillaParams && ImGui.TableNextColumn())
+                    {
+                        ImGui.Text("Vanilla");
+                    }
+                    foreach ((var name, Param.Row r) in auxRows)
+                    {
+                        if (ImGui.TableNextColumn())
+                        {
+                            ImGui.Text(name);
+                        }
+                    }
+                }
+
+                ImGui.PushStyleColorVec4(ImGuiCol.Text, new Vector4(0.8f, 0.8f, 1.0f, 1.0f));
+                foreach (ref var field in propertyRowsHeader.AsSpan())
+                {
+                    PropEditorPropRow(bank, ref field, null, true, selection); //Weird nulling of activeparam to obscure pin options
+                }
+                ImGui.PopStyleColor(1);
+                ImGui.Spacing();
+
+                EditorDecorations.ImguiTableSeparator();
+                if (propertyRowsPinned.Length > 0)
+                {
+                    foreach (ref var field in propertyRowsPinned.AsSpan())
+                    {
+                        PropEditorPropRow(bank, ref field, activeParam, true, selection);
+                    }
+
+                    EditorDecorations.ImguiTableSeparator();
+                }
+
+                var lastRowExists = false;
+                foreach (ref var field in propertyRows.AsSpan())
+                {
+                    if (field.Equals("-") && lastRowExists)
+                    {
+                        EditorDecorations.ImguiTableSeparator();
+                        lastRowExists = false;
+                        continue;
+                    }
+                    PropEditorPropRow(bank, ref field, activeParam, false, selection);
+                    lastRowExists = true;
+                }
+
+                ImGui.EndTable();
+            }
+            ImGui.EndChild();
+        }
+        
+        if (meta.CalcCorrectDef != null || meta.SoulCostDef != null)
+        {
+            EditorDecorations.DrawCalcCorrectGraph(_paramEditor, meta, row);
+        }
+    }
     public void PropEditorParamRow(ParamBank bank, Param.Row row, Param.Row vrow, List<(string, Param.Row)> auxRows,
         Param.Row crow, ref string propSearchString, string activeParam, bool isActiveView,
         ParamEditorSelectionState selection)
@@ -283,7 +380,7 @@ public class ParamRowEditor
             col.Item2,
             selection);
     }
-    private record struct PropertyRowEntry(int index, FieldInfoEntry field, CellInfoEntry cell, CellInfoEntry vanilla, CellInfoEntry[] aux, CellInfoEntry compare);
+    private record struct PropertyRowEntry(int index, bool isDummy, FieldInfoEntry field, CellInfoEntry cell, CellInfoEntry vanilla, CellInfoEntry[] aux, CellInfoEntry compare);
     private record struct FieldInfoEntry(Param.Column? col, FieldMetaData meta, Type propType, PropertyInfo proprow,
         string displayText, string internalName, string wiki,
         bool isParamRef, string inactiveParamRefText, string activeParamRefText,
