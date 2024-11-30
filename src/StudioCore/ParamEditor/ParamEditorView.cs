@@ -523,9 +523,9 @@ public class ParamEditorView
                 if (entriesPins.Length != 0)
                 {
                     var lastCol = false;
-                    foreach (ParamRowListEntry e in entriesPins)
+                    foreach (ref ParamRowListEntry e in entriesPins.AsSpan())
                     {
-                        lastCol = ParamView_RowList_Entry(e, pinnedRowList, activeParam, ref scrollTo, false, true, category, compareCol, compareColProp);
+                        lastCol = ParamView_RowList_Entry(ref e, pinnedRowList, activeParam, ref scrollTo, false, true, category, compareCol, compareColProp);
                     }
 
                     if (lastCol)
@@ -565,13 +565,13 @@ public class ParamEditorView
                 {
                     return rows.Select((row, i) => getRowListEntryForRow(row, vanillaDiffCache, auxDiffCaches, rows, i, category)).ToArray();
                 });
-                foreach (ParamRowListEntry e in entries)
+                foreach (ref ParamRowListEntry e in entries.AsSpan())
                 {                        
                     if (enableGrouping && e.consecutivePre)
                     {
                         EditorDecorations.ImguiTableSeparator();
                     }
-                    ParamView_RowList_Entry(e, rows, activeParam, ref scrollTo, doFocus, false, category, compareCol, compareColProp);
+                    ParamView_RowList_Entry(ref e, rows, activeParam, ref scrollTo, doFocus, false, category, compareCol, compareColProp);
                     if (enableGrouping && e.consecutivePost)
                     {
                         EditorDecorations.ImguiTableSeparator();
@@ -646,7 +646,7 @@ public class ParamEditorView
         }
     }
 
-    private void ParamView_RowList_Entry_Row(ParamRowListEntry rowEntry, string activeParam, List<Param.Row> p, ref float scrollTo, bool doFocus, bool isPinned, FmgEntryCategory fmgCategory)
+    private void ParamView_RowList_Entry_Row(ref ParamRowListEntry rowEntry, string activeParam, List<Param.Row> p, ref float scrollTo, bool doFocus, bool isPinned, FmgEntryCategory fmgCategory)
     {
         
         if (rowEntry.modified)
@@ -851,7 +851,7 @@ public class ParamEditorView
         }
     }
 
-    private bool ParamView_RowList_Entry(ParamRowListEntry rowListEntry,
+    private bool ParamView_RowList_Entry(ref ParamRowListEntry rowListEntry,
         List<Param.Row> p, string activeParam, ref float scrollTo, bool doFocus, bool isPinned,
         FmgEntryCategory fmgEntryCategory, Param.Column compareCol, PropertyInfo compareColProp)
     {
@@ -867,7 +867,7 @@ public class ParamEditorView
         var lastCol = false;
         if (ImGui.TableNextColumn())
         {
-            ParamView_RowList_Entry_Row(rowListEntry, activeParam, p, ref scrollTo, doFocus, isPinned, fmgEntryCategory);
+            ParamView_RowList_Entry_Row(ref rowListEntry, activeParam, p, ref scrollTo, doFocus, isPinned, fmgEntryCategory);
             lastCol = true;
         }
 
