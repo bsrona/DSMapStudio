@@ -147,7 +147,83 @@ public class ParamRowEditor
 
     public void PropEditorParamRowNew(ParamBank bank, Param.Row row, Param.Row vrow, List<(string, Param.Row)> auxRows, Param.Row crow, ref string propSearchString, string activeParam, bool isActiveView, ParamEditorSelectionState selection)
     {
-        PropertyRowEntry[] propertyRowsHeader = [];//TODO
+        PropertyRowEntry[] propertyRowsHeader = UICache.GetCached(_paramEditor, row, "fieldsHeader", () =>
+        {
+            PropertyRowEntry[] rowFields =
+            [
+                new() {
+                    index = -2,
+                    isDummy = false,
+                    field = new() {
+                        displayText = "Name",
+                        internalName = "Name",
+                        proprow = typeof(Param.Row).GetProperty("Name"),
+                        propType = typeof(string),
+                        wiki = "The name of the row in Params. Not related to in-game text.",
+                    },
+                    cell = new() {
+                        row = row,
+                        oldval = row.Name,
+                        diffVanilla = !string.Equals(row.Name, vrow?.Name),
+                        matchDefault = row.Name == null || row.Name.Length == 0,
+                    },
+                    vanilla = new() {
+                        row = vrow,
+                        oldval = vrow?.Name,
+                        conflictOrDiffPrimary = !string.Equals(vrow?.Name, row.Name),
+                        matchDefault = vrow?.Name == null || vrow?.Name.Length == 0,
+                    },
+                    aux = auxRows.Select(a => new CellInfoEntry() {
+                            row = a.Item2,
+                            oldval = a.Item2?.Name,
+                            diffVanilla = !string.Equals(a.Item2?.Name, vrow?.Name),
+                            conflictOrDiffPrimary = !string.Equals(a.Item2?.Name, row.Name),
+                            matchDefault = a.Item2?.Name == null || a.Item2?.Name.Length == 0,
+                    }).ToArray(),
+                    compare = new() {
+                        row = crow,
+                        oldval = crow?.Name,
+                        diffVanilla = !string.Equals(crow?.Name, vrow?.Name),
+                        conflictOrDiffPrimary = !string.Equals(crow?.Name, row.Name),
+                        matchDefault = crow?.Name == null || crow?.Name.Length == 0,
+                    }
+                },
+                new() {
+                    index = -1,
+                    isDummy = false,
+                    field = new() {
+                        displayText = "ID",
+                        internalName = "ID",
+                        proprow = typeof(Param.Row).GetProperty("ID"),
+                        propType = typeof(int),
+                        wiki = "The name of the row in Params. Not related to in-game text.",
+                    },
+                    cell = new() {
+                        row = row,
+                        oldval = row.ID,
+                        diffVanilla = !Equals(row.ID, vrow?.ID),
+                    },
+                    vanilla = new() {
+                        row = vrow,
+                        oldval = vrow?.ID,
+                        conflictOrDiffPrimary = !Equals(vrow?.ID, row.ID),
+                    },
+                    aux = auxRows.Select(a => new CellInfoEntry() {
+                            row = a.Item2,
+                            oldval = a.Item2?.ID,
+                            diffVanilla = !Equals(a.Item2?.ID, vrow?.ID),
+                            conflictOrDiffPrimary = !Equals(a.Item2?.ID, row.ID),
+                    }).ToArray(),
+                    compare = new() {
+                        row = crow,
+                        oldval = crow?.ID,
+                        diffVanilla = !Equals(crow?.ID, vrow?.ID),
+                        conflictOrDiffPrimary = !Equals(crow?.ID, row.ID),
+                    }
+                }
+            ];
+            return rowFields;
+        });
         PropertyRowEntry[] propertyRowsPinned = [];//TODO
         PropertyRowEntry[] propertyRows = [];//TODO
 
@@ -182,28 +258,35 @@ public class ParamRowEditor
                 ImGui.TableSetupScrollFreeze(columnCount, (showColumnHeaders ? 1 : 0) + propertyRowsHeader.Length + (1 + propertyRowsPinned?.Length ?? 0));
                 if (showColumnHeaders)
                 {
-                    ImGui.TableNextColumn();
+                    if (ImGui.TableNextColumn())
+                    {
+                        ImGui.Text("Field");
+                    }
                     if (ImGui.TableNextColumn())
                     {
                         ImGui.Text("Current");
                     }
-                    if (CFG.Current.Param_ShowVanillaParams && ImGui.TableNextColumn())
+                    if (showVanilla && ImGui.TableNextColumn())
                     {
                         ImGui.Text("Vanilla");
                     }
                     foreach ((var name, Param.Row r) in auxRows)
                     {
-                        if (ImGui.TableNextColumn())
+                        if (showParamCompare && ImGui.TableNextColumn())
                         {
                             ImGui.Text(name);
                         }
+                    }
+                    if (showRowCompare && ImGui.TableNextColumn())
+                    {
+                        ImGui.Text(@$"Row {crow.ID}");
                     }
                 }
 
                 ImGui.PushStyleColorVec4(ImGuiCol.Text, new Vector4(0.8f, 0.8f, 1.0f, 1.0f));
                 foreach (ref var field in propertyRowsHeader.AsSpan())
                 {
-                    PropEditorPropRow(bank, ref field, null, true, selection); //Weird nulling of activeparam to obscure pin options
+                    PropEditorPropRow(bank, null, ref field, selection, true); //Weird nulling of activeparam to obscure pin options
                 }
                 ImGui.PopStyleColor(1);
                 ImGui.Spacing();
@@ -213,7 +296,7 @@ public class ParamRowEditor
                 {
                     foreach (ref var field in propertyRowsPinned.AsSpan())
                     {
-                        PropEditorPropRow(bank, ref field, activeParam, true, selection);
+                        PropEditorPropRow(bank, activeParam, ref field, selection, true);
                     }
 
                     EditorDecorations.ImguiTableSeparator();
@@ -222,13 +305,16 @@ public class ParamRowEditor
                 var lastRowExists = false;
                 foreach (ref var field in propertyRows.AsSpan())
                 {
-                    if (field.Equals("-") && lastRowExists)
+                    if (field.isDummy)
                     {
-                        EditorDecorations.ImguiTableSeparator();
-                        lastRowExists = false;
+                        if (lastRowExists)
+                        {
+                            EditorDecorations.ImguiTableSeparator();
+                            lastRowExists = false;
+                        }
                         continue;
                     }
-                    PropEditorPropRow(bank, ref field, activeParam, false, selection);
+                    PropEditorPropRow(bank, activeParam, ref field, selection, false);
                     lastRowExists = true;
                 }
 
@@ -395,7 +481,7 @@ public class ParamRowEditor
         string enumText,
         bool diffVanilla, bool conflictOrDiffPrimary, bool matchDefault);
 
-    private void PropEditorPropRow(ParamBank bank, ref PropertyRowEntry entry, string activeParam, bool isPinned, ParamEditorSelectionState selection)
+    private void PropEditorPropRow(ParamBank bank, string activeParam, ref PropertyRowEntry entry, ParamEditorSelectionState selection, bool isPinned)
     {
         ImGui.PushID(entry.index);
 
@@ -546,9 +632,9 @@ public class ParamRowEditor
         ImGui.PushStyleColorVec4(ImGuiCol.FrameBg, new Vector4(0.180f, 0.180f, 0.196f, 1.0f));
         ImGui.PushStyleColorVec4(ImGuiCol.Text, new Vector4(0.9f, 0.9f, 0.9f, 1.0f));
 
-        if (CFG.Current.Param_ShowVanillaParams && vanilla != null && ImGui.TableNextColumn())
+        if (CFG.Current.Param_ShowVanillaParams && ImGui.TableNextColumn() && vanilla != null)
         {
-            AdditionalColumnValue(ref field, ref vanilla, bank, @$"colvalvanilla");
+            AdditionalColumnValue(ref field, ref vanilla, bank, @$"##colvalvanilla");
         }
 
         //AUX
@@ -561,7 +647,7 @@ public class ParamRowEditor
                 {
                     ImGui.PushStyleColorVec4(ImGuiCol.FrameBg, new Vector4(0.2f, 0.2f, 0.35f, 1.0f));
                 }
-                AdditionalColumnValue(ref field, ref aux, bank, @$"colval{i}");
+                AdditionalColumnValue(ref field, ref aux, bank, @$"##colval{i}");
                 if (!cell.conflictOrDiffPrimary && aux.diffVanilla)
                 {
                     ImGui.PopStyleColor(1);
@@ -575,13 +661,13 @@ public class ParamRowEditor
 
         //COMPARE
         CellInfoEntry compare = entry.compare;
-        if (compare != null && ImGui.TableNextColumn())
+        if (compare.row != null && ImGui.TableNextColumn())
         {
             if (compare.conflictOrDiffPrimary)
             {
                 ImGui.PushStyleColorVec4(ImGuiCol.FrameBg, new Vector4(0.2f, 0.2f, 0.35f, 1.0f));
             }
-            AdditionalColumnValue(ref field, ref compare, bank, @$"colvalcompRow");
+            AdditionalColumnValue(ref field, ref compare, bank, @$"##colvalcompRow");
             if (compare.conflictOrDiffPrimary)
             {
                 ImGui.PopStyleColor(1);

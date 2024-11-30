@@ -601,7 +601,7 @@ public class ParamEditorView
         {
             ImGui.BeginChild("columns" + activeParam);
             Param vanillaParam = ParamBank.VanillaBank.Params?.GetValueOrDefault(activeParam);
-            _propEditor.PropEditorParamRow(
+            _propEditor.PropEditorParamRowNew(
                 ParamBank.PrimaryBank,
                 activeRow,
                 vanillaParam?[activeRow.ID],
