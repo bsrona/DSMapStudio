@@ -201,6 +201,7 @@ public class ParamEditorSelectionState
         {
             ParamEditorParamSelectionState s = _paramStates[_activeParam];
             s.compareRow = row;
+            UICache.ClearCaches();
         }
     }
 
@@ -210,6 +211,7 @@ public class ParamEditorSelectionState
         {
             ParamEditorParamSelectionState s = _paramStates[_activeParam];
             s.compareCol = col;
+            UICache.ClearCaches();
         }
     }
 
