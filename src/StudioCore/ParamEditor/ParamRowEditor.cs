@@ -466,20 +466,50 @@ public class ParamRowEditor
             col.Item2,
             selection);
     }
-    private record struct PropertyRowEntry(int index, bool isDummy, FieldInfoEntry field, CellInfoEntry cell, CellInfoEntry vanilla, CellInfoEntry[] aux, CellInfoEntry compare);
-    private record struct FieldInfoEntry(Param.Column? col, FieldMetaData meta, Type propType, PropertyInfo proprow,
-        string displayText, string internalName, string wiki,
-        bool isParamRef, string inactiveParamRefText, string activeParamRefText,
-        bool isFMGRef, string inactiveFmgRefText, string activeFmgRefText,
-        bool isEnum, string enumText,
-        string extRefText, string virtualRef, bool displayBool,
-        bool isRef);
-    private record struct CellInfoEntry(Param.Row row, Param.Cell? nullableCell,
-        object oldval,
-        string paramRefText,
-        string fmgRefText,
-        string enumText,
-        bool diffVanilla, bool conflictOrDiffPrimary, bool matchDefault);
+    private struct PropertyRowEntry
+    {
+        internal int index;
+        internal bool isDummy;
+        internal FieldInfoEntry field;
+        internal CellInfoEntry cell;
+        internal CellInfoEntry vanilla;
+        internal CellInfoEntry[] aux;
+        internal CellInfoEntry compare;
+    }
+    private struct FieldInfoEntry
+    {
+        internal Param.Column? col;
+        internal FieldMetaData meta;
+        internal Type propType;
+        internal PropertyInfo proprow;
+        internal string displayText;
+        internal string internalName;
+        internal string wiki;
+        internal bool isParamRef;
+        internal string inactiveParamRefText;
+        internal string activeParamRefText;
+        internal bool isFMGRef;
+        internal string inactiveFmgRefText;
+        internal string activeFmgRefText;
+        internal bool isEnum;
+        internal string enumText;
+        internal string extRefText;
+        internal string virtualRef;
+        internal bool displayBool;
+        internal bool isRef;
+    }
+    private struct CellInfoEntry
+    {
+        internal Param.Row row;
+        internal Param.Cell? nullableCell;
+        internal object oldval;
+        internal string paramRefText;
+        internal string fmgRefText;
+        internal string enumText;
+        internal bool diffVanilla;
+        internal bool conflictOrDiffPrimary;
+        internal bool matchDefault;
+    }
 
     private void PropEditorPropRow(ParamBank bank, string activeParam, ref PropertyRowEntry entry, ParamEditorSelectionState selection, bool isPinned)
     {
@@ -632,7 +662,7 @@ public class ParamRowEditor
         ImGui.PushStyleColorVec4(ImGuiCol.FrameBg, new Vector4(0.180f, 0.180f, 0.196f, 1.0f));
         ImGui.PushStyleColorVec4(ImGuiCol.Text, new Vector4(0.9f, 0.9f, 0.9f, 1.0f));
 
-        if (CFG.Current.Param_ShowVanillaParams && ImGui.TableNextColumn() && vanilla != null)
+        if (CFG.Current.Param_ShowVanillaParams && ImGui.TableNextColumn() && vanilla.row != null)
         {
             AdditionalColumnValue(ref field, ref vanilla, bank, @$"##colvalvanilla");
         }
