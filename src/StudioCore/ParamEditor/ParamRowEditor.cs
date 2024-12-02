@@ -145,83 +145,55 @@ public class ParamRowEditor
         }
     }
 
+    private void FillPropertyRowEntry<T>(ref PropertyRowEntry e, ref int index, string property, T obj, T vobj, List<(string, T)> aobjs, T cobj) where T : Param.Row //Shitty 1-case generic for now. Figure out generifying later.
+    {
+        e.index = index++;
+        e.isDummy = false;
+        ref FieldInfoEntry f = ref e.field;
+        f.displayText = property;
+        f.internalName = property;
+        f.proprow = typeof(T).GetProperty(property);
+        f.propType = f.proprow.PropertyType;
+        //f.wiki = "The name of the row in Params. Not related to in-game text.",
+        ref CellInfoEntry c = ref e.cell;
+        c.row = obj;
+        c.oldval = obj != null ? f.proprow.GetValue(obj) : null; //Using reflection - sad and bad! Alternative? Delegate? inlineable function in a struct so it's fully reified at runtime?
+        ref CellInfoEntry v = ref e.vanilla;
+        v.row = vobj;
+        v.oldval = vobj != null ? f.proprow.GetValue(vobj) : null;
+  
+        c.diffVanilla = !Equals(c.oldval, v.oldval);
+        v.conflictOrDiffPrimary = c.diffVanilla;
+
+        //Fix aobjs passing around string tuple
+        e.aux = new CellInfoEntry[aobjs.Count];
+        for(int i=0; i<aobjs.Count; i++)
+        {
+            ref CellInfoEntry a = ref e.aux[i];
+            T aobj = aobjs[i].Item2;
+            a.row = aobj;
+            a.oldval = aobj != null ? f.proprow.GetValue(aobj) : null;
+            a.diffVanilla = !Equals(a.oldval, v.oldval);
+            a.conflictOrDiffPrimary = !Equals(a.oldval, c.oldval);
+        }
+        ref CellInfoEntry cmp = ref e.compare;
+        cmp.row = cobj;
+        cmp.oldval = cobj != null ? f.proprow.GetValue(cobj) : null;
+        cmp.diffVanilla = !Equals(cmp.oldval, v.oldval);
+        cmp.conflictOrDiffPrimary = !Equals(cmp.oldval, c.oldval);
+
+        c.conflictOrDiffPrimary = (c.diffVanilla ? 1 : 0) + e.aux.Count((a) => a.diffVanilla && a.conflictOrDiffPrimary) > 1; //Doesn't mark conflict if it matches primary - check this matches search behaviour
+        //Not marking matchDefault or any other metainfo here.
+    }
+
     public void PropEditorParamRowNew(ParamBank bank, Param.Row row, Param.Row vrow, List<(string, Param.Row)> auxRows, Param.Row crow, ref string propSearchString, string activeParam, bool isActiveView, ParamEditorSelectionState selection)
     {
         PropertyRowEntry[] propertyRowsHeader = UICache.GetCached(_paramEditor, row, "fieldsHeader", () =>
         {
-            PropertyRowEntry[] rowFields =
-            [
-                new() {
-                    index = -2,
-                    isDummy = false,
-                    field = new() {
-                        displayText = "Name",
-                        internalName = "Name",
-                        proprow = typeof(Param.Row).GetProperty("Name"),
-                        propType = typeof(string),
-                        wiki = "The name of the row in Params. Not related to in-game text.",
-                    },
-                    cell = new() {
-                        row = row,
-                        oldval = row.Name,
-                        diffVanilla = !string.Equals(row.Name, vrow?.Name),
-                        matchDefault = row.Name == null || row.Name.Length == 0,
-                    },
-                    vanilla = new() {
-                        row = vrow,
-                        oldval = vrow?.Name,
-                        conflictOrDiffPrimary = !string.Equals(vrow?.Name, row.Name),
-                        matchDefault = vrow?.Name == null || vrow?.Name.Length == 0,
-                    },
-                    aux = auxRows.Select(a => new CellInfoEntry() {
-                            row = a.Item2,
-                            oldval = a.Item2?.Name,
-                            diffVanilla = !string.Equals(a.Item2?.Name, vrow?.Name),
-                            conflictOrDiffPrimary = !string.Equals(a.Item2?.Name, row.Name),
-                            matchDefault = a.Item2?.Name == null || a.Item2?.Name.Length == 0,
-                    }).ToArray(),
-                    compare = new() {
-                        row = crow,
-                        oldval = crow?.Name,
-                        diffVanilla = !string.Equals(crow?.Name, vrow?.Name),
-                        conflictOrDiffPrimary = !string.Equals(crow?.Name, row.Name),
-                        matchDefault = crow?.Name == null || crow?.Name.Length == 0,
-                    }
-                },
-                new() {
-                    index = -1,
-                    isDummy = false,
-                    field = new() {
-                        displayText = "ID",
-                        internalName = "ID",
-                        proprow = typeof(Param.Row).GetProperty("ID"),
-                        propType = typeof(int),
-                        wiki = "The name of the row in Params. Not related to in-game text.",
-                    },
-                    cell = new() {
-                        row = row,
-                        oldval = row.ID,
-                        diffVanilla = !Equals(row.ID, vrow?.ID),
-                    },
-                    vanilla = new() {
-                        row = vrow,
-                        oldval = vrow?.ID,
-                        conflictOrDiffPrimary = !Equals(vrow?.ID, row.ID),
-                    },
-                    aux = auxRows.Select(a => new CellInfoEntry() {
-                            row = a.Item2,
-                            oldval = a.Item2?.ID,
-                            diffVanilla = !Equals(a.Item2?.ID, vrow?.ID),
-                            conflictOrDiffPrimary = !Equals(a.Item2?.ID, row.ID),
-                    }).ToArray(),
-                    compare = new() {
-                        row = crow,
-                        oldval = crow?.ID,
-                        diffVanilla = !Equals(crow?.ID, vrow?.ID),
-                        conflictOrDiffPrimary = !Equals(crow?.ID, row.ID),
-                    }
-                }
-            ];
+            PropertyRowEntry[] rowFields = new PropertyRowEntry[2];
+            int index = 0;
+            FillPropertyRowEntry(ref rowFields[0], ref index, "Name", row, vrow, auxRows, crow);
+            FillPropertyRowEntry(ref rowFields[1], ref index, "ID", row, vrow, auxRows, crow);
             return rowFields;
         });
         PropertyRowEntry[] propertyRowsPinned = [];//TODO
