@@ -145,7 +145,7 @@ public class ParamRowEditor
         }
     }
 
-    private void FillPropertyRowEntry_Basic_Reflection<T>(ref PropertyRowEntry e, string property, T obj, T vobj, List<(string, T)> aobjs, T cobj) where T : Param.Row //Shitty 1-case generic for now. Figure out generifying later.
+    private void FillPropertyRowEntry_Basic_Reflection<T>(ref PropertyRowEntry<T> e, string property, T obj, Param.Row robj, T vobj, Param.Row vrobj, List<(string, T)> aobjs, List<(string, Param.Row)> arobjs, T cobj, Param.Row crobj) //Stupid stupid param rows funking my day up
     {
         e.isDummy = false;
         ref FieldInfoEntry f = ref e.field;
@@ -153,66 +153,71 @@ public class ParamRowEditor
         f.internalName = property;
         f.proprow = typeof(T).GetProperty(property);
         f.propType = f.proprow.PropertyType;
-        ref CellInfoEntry c = ref e.cell;
-        c.row = obj;
+        ref CellInfoEntry<T> c = ref e.cell;
+        c.obj = obj;
+        c.row = robj;
         c.oldval = obj != null ? f.proprow.GetValue(obj) : null; //Using reflection - sad and bad! Alternative? Delegate? inlineable function in a struct so it's fully reified at runtime?
-        ref CellInfoEntry v = ref e.vanilla;
-        v.row = vobj;
+        ref CellInfoEntry<T> v = ref e.vanilla;
+        v.obj = vobj;
+        v.row = vrobj;
         v.oldval = vobj != null ? f.proprow.GetValue(vobj) : null;
 
         //Fix aobjs passing around string tuple
-        e.aux = new CellInfoEntry[aobjs.Count];
+        e.aux = new CellInfoEntry<T>[aobjs.Count];
         for(int i=0; i<aobjs.Count; i++)
         {
-            ref CellInfoEntry a = ref e.aux[i];
+            ref CellInfoEntry<T> a = ref e.aux[i];
             T aobj = aobjs[i].Item2;
-            a.row = aobj;
+            Param.Row arobj = arobjs[i].Item2;
+            a.obj = aobj;
+            a.row = arobj;
             a.oldval = aobj != null ? f.proprow.GetValue(aobj) : null;
         }
-        ref CellInfoEntry cmp = ref e.compare;
-        cmp.row = cobj;
+        ref CellInfoEntry<T> cmp = ref e.compare;
+        cmp.obj = cobj;
+        cmp.row = crobj;
         cmp.oldval = cobj != null ? f.proprow.GetValue(cobj) : null;
     }
 
-    private void FillPropertyRowEntry_Diffs(ref PropertyRowEntry e)
+    private void FillPropertyRowEntry_Diffs<T>(ref PropertyRowEntry<T> e)
     {
         ref FieldInfoEntry f = ref e.field;
-        ref CellInfoEntry c = ref e.cell;
-        ref CellInfoEntry v = ref e.vanilla;  
+        ref CellInfoEntry<T> c = ref e.cell;
+        ref CellInfoEntry<T> v = ref e.vanilla;  
         c.diffVanilla = !Equals(c.oldval, v.oldval);
         v.conflictOrDiffPrimary = c.diffVanilla;
         for(int i=0; i<e.aux.Length; i++)
         {
-            ref CellInfoEntry a = ref e.aux[i];
+            ref CellInfoEntry<T> a = ref e.aux[i];
             a.diffVanilla = !Equals(a.oldval, v.oldval);
             a.conflictOrDiffPrimary = !Equals(a.oldval, c.oldval);
         }
-        ref CellInfoEntry cmp = ref e.compare;
+        ref CellInfoEntry<T> cmp = ref e.compare;
         cmp.diffVanilla = !Equals(cmp.oldval, v.oldval);
         cmp.conflictOrDiffPrimary = !Equals(cmp.oldval, c.oldval);
 
         c.conflictOrDiffPrimary = (c.diffVanilla ? 1 : 0) + e.aux.Count((a) => a.diffVanilla && a.conflictOrDiffPrimary) > 1; //Doesn't mark conflict if it matches primary - check this matches search behaviour
     }
 
-    private void FillPropertyRowEntry<T>(ref PropertyRowEntry e, ref int index, string property, T obj, T vobj, List<(string, T)> aobjs, T cobj) where T : Param.Row //Shitty 1-case generic for now. Figure out generifying later.
+    private void FillPropertyRowEntry<T>(ref PropertyRowEntry<T> e, ref int index, string property, T obj, Param.Row robj, T vobj, Param.Row vrobj, List<(string, T)> aobjs, List<(string, Param.Row)> arobjs, T cobj, Param.Row crobj)
     {
         e.index = index++;
-        FillPropertyRowEntry_Basic_Reflection(ref e, property, obj, vobj, aobjs, cobj);
+        FillPropertyRowEntry_Basic_Reflection(ref e, property, obj, robj, vobj, vrobj, aobjs, arobjs, cobj, crobj);
         FillPropertyRowEntry_Diffs(ref e);
     }
 
     public void PropEditorParamRowNew(ParamBank bank, Param.Row row, Param.Row vrow, List<(string, Param.Row)> auxRows, Param.Row crow, ref string propSearchString, string activeParam, bool isActiveView, ParamEditorSelectionState selection)
     {
-        PropertyRowEntry[] propertyRowsHeader = UICache.GetCached(_paramEditor, row, "fieldsHeader", () =>
+        PropertyRowEntry<Param.Row>[] propertyRowsHeader = UICache.GetCached(_paramEditor, row, "fieldsHeader", () =>
         {
-            PropertyRowEntry[] rowFields = new PropertyRowEntry[2];
+            PropertyRowEntry<Param.Row>[] rowFields = new PropertyRowEntry<Param.Row>[2];
             int index = 0;
-            FillPropertyRowEntry(ref rowFields[0], ref index, "Name", row, vrow, auxRows, crow);
-            FillPropertyRowEntry(ref rowFields[1], ref index, "ID", row, vrow, auxRows, crow);
+            FillPropertyRowEntry(ref rowFields[0], ref index, "Name", row, row, vrow, vrow, auxRows, auxRows, crow, crow);
+            FillPropertyRowEntry(ref rowFields[1], ref index, "ID", row, row, vrow, crow, auxRows, auxRows, crow, crow);
             return rowFields;
         });
-        PropertyRowEntry[] propertyRowsPinned = [];//TODO
-        PropertyRowEntry[] propertyRows = [];//TODO
+        PropertyRowEntry<Param.Cell>[] propertyRowsPinned = [];//TODO
+        PropertyRowEntry<Param.Cell>[] propertyRows = [];//TODO
 
         ParamMetaData meta = ParamMetaData.Get(row.Def);
 
@@ -453,15 +458,15 @@ public class ParamRowEditor
             col.Item2,
             selection);
     }
-    private struct PropertyRowEntry
+    private struct PropertyRowEntry<T>
     {
         internal int index;
         internal bool isDummy;
         internal FieldInfoEntry field;
-        internal CellInfoEntry cell;
-        internal CellInfoEntry vanilla;
-        internal CellInfoEntry[] aux;
-        internal CellInfoEntry compare;
+        internal CellInfoEntry<T> cell;
+        internal CellInfoEntry<T> vanilla;
+        internal CellInfoEntry<T>[] aux;
+        internal CellInfoEntry<T> compare;
     }
     private struct FieldInfoEntry
     {
@@ -485,10 +490,10 @@ public class ParamRowEditor
         internal bool displayBool;
         internal bool isRef;
     }
-    private struct CellInfoEntry
+    private struct CellInfoEntry<T>
     {
-        internal Param.Row row;
-        internal Param.Cell? nullableCell;
+        internal T obj;
+        internal Param.Row row; //Still here for legacy reasons
         internal object oldval;
         internal string paramRefText;
         internal string fmgRefText;
@@ -498,11 +503,11 @@ public class ParamRowEditor
         internal bool matchDefault;
     }
 
-    private void PropEditorPropRow(ParamBank bank, string activeParam, ref PropertyRowEntry entry, ParamEditorSelectionState selection, bool isPinned)
+    private void PropEditorPropRow<T>(ParamBank bank, string activeParam, ref PropertyRowEntry<T> entry, ParamEditorSelectionState selection, bool isPinned)
     {
         ImGui.PushID(entry.index);
 
-        FieldInfoEntry field = entry.field;
+        ref FieldInfoEntry field = ref entry.field;
 
         //ENTRY.FIELD
         if (ImGui.TableNextColumn())
@@ -600,7 +605,7 @@ public class ParamRowEditor
 
         object newval = null;
         //ENTRY.CELL
-        CellInfoEntry cell = entry.cell;
+        ref CellInfoEntry<T> cell = ref entry.cell;
         if (ImGui.TableNextColumn())
         {
             if (cell.conflictOrDiffPrimary)
@@ -645,11 +650,11 @@ public class ParamRowEditor
         }
 
         //VANILLA
-        CellInfoEntry vanilla = entry.vanilla;
+        ref CellInfoEntry<T> vanilla = ref entry.vanilla;
         ImGui.PushStyleColorVec4(ImGuiCol.FrameBg, new Vector4(0.180f, 0.180f, 0.196f, 1.0f));
         ImGui.PushStyleColorVec4(ImGuiCol.Text, new Vector4(0.9f, 0.9f, 0.9f, 1.0f));
 
-        if (CFG.Current.Param_ShowVanillaParams && ImGui.TableNextColumn() && vanilla.row != null)
+        if (CFG.Current.Param_ShowVanillaParams && ImGui.TableNextColumn() && vanilla.obj != null)
         {
             AdditionalColumnValue(ref field, ref vanilla, bank, @$"##colvalvanilla");
         }
@@ -657,7 +662,7 @@ public class ParamRowEditor
         //AUX
         for (var i = 0; i < entry.aux.Length; i++)
         {
-            CellInfoEntry aux = entry.aux[i];
+            ref CellInfoEntry<T> aux = ref entry.aux[i];
             if (ImGui.TableNextColumn())
             {
                 if (!cell.conflictOrDiffPrimary && aux.diffVanilla)
@@ -677,8 +682,8 @@ public class ParamRowEditor
         }
 
         //COMPARE
-        CellInfoEntry compare = entry.compare;
-        if (compare.row != null && ImGui.TableNextColumn())
+        CellInfoEntry<T> compare = entry.compare;
+        if (compare.obj != null && ImGui.TableNextColumn())
         {
             if (compare.conflictOrDiffPrimary)
             {
@@ -704,8 +709,7 @@ public class ParamRowEditor
 
         //Note here newval isn't passed in. This is because ParamEditorCommon actually caches it
         //This saves it from reversion if this edit is triggered before the imgui for this field is called
-        var committed = ParamEditorCommon.UpdateProperty(ContextActionManager,
-            cell.nullableCell != null ? cell.nullableCell : cell.row, field.proprow, cell.oldval);
+        var committed = ParamEditorCommon.UpdateProperty(ContextActionManager, cell.obj, field.proprow, cell.oldval);
         if (committed && ParamBank.VanillaBank.IsLoaded)
         {
             Locator.ActiveProject.ParamDiffBank.RefreshParamRowDiffs(cell.row, activeParam);
@@ -714,7 +718,7 @@ public class ParamRowEditor
         ImGui.PopID();
     }
 
-    private void AdditionalColumnValue(ref FieldInfoEntry field, ref CellInfoEntry cell, ParamBank bank, string imguiElemName)
+    private void AdditionalColumnValue<T>(ref FieldInfoEntry field, ref CellInfoEntry<T> cell, ParamBank bank, string imguiElemName)
     {
         //Real case any more?
         if (cell.oldval == null)
@@ -727,7 +731,7 @@ public class ParamRowEditor
         ColumnReferences(ref field, ref cell, bank, false);
     }
 
-    private void ColumnReferences(ref FieldInfoEntry field, ref CellInfoEntry cell, ParamBank bank, bool allowClickForPopup)
+    private void ColumnReferences<T>(ref FieldInfoEntry field, ref CellInfoEntry<T> cell, ParamBank bank, bool allowClickForPopup)
     {
         ImGui.BeginGroup();
         bool anyItem = false;
