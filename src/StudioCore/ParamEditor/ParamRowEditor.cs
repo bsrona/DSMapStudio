@@ -145,25 +145,20 @@ public class ParamRowEditor
         }
     }
 
-    private void FillPropertyRowEntry<T>(ref PropertyRowEntry e, ref int index, string property, T obj, T vobj, List<(string, T)> aobjs, T cobj) where T : Param.Row //Shitty 1-case generic for now. Figure out generifying later.
+    private void FillPropertyRowEntry_Basic_Reflection<T>(ref PropertyRowEntry e, string property, T obj, T vobj, List<(string, T)> aobjs, T cobj) where T : Param.Row //Shitty 1-case generic for now. Figure out generifying later.
     {
-        e.index = index++;
         e.isDummy = false;
         ref FieldInfoEntry f = ref e.field;
         f.displayText = property;
         f.internalName = property;
         f.proprow = typeof(T).GetProperty(property);
         f.propType = f.proprow.PropertyType;
-        //f.wiki = "The name of the row in Params. Not related to in-game text.",
         ref CellInfoEntry c = ref e.cell;
         c.row = obj;
         c.oldval = obj != null ? f.proprow.GetValue(obj) : null; //Using reflection - sad and bad! Alternative? Delegate? inlineable function in a struct so it's fully reified at runtime?
         ref CellInfoEntry v = ref e.vanilla;
         v.row = vobj;
         v.oldval = vobj != null ? f.proprow.GetValue(vobj) : null;
-  
-        c.diffVanilla = !Equals(c.oldval, v.oldval);
-        v.conflictOrDiffPrimary = c.diffVanilla;
 
         //Fix aobjs passing around string tuple
         e.aux = new CellInfoEntry[aobjs.Count];
@@ -173,17 +168,37 @@ public class ParamRowEditor
             T aobj = aobjs[i].Item2;
             a.row = aobj;
             a.oldval = aobj != null ? f.proprow.GetValue(aobj) : null;
-            a.diffVanilla = !Equals(a.oldval, v.oldval);
-            a.conflictOrDiffPrimary = !Equals(a.oldval, c.oldval);
         }
         ref CellInfoEntry cmp = ref e.compare;
         cmp.row = cobj;
         cmp.oldval = cobj != null ? f.proprow.GetValue(cobj) : null;
+    }
+
+    private void FillPropertyRowEntry_Diffs(ref PropertyRowEntry e)
+    {
+        ref FieldInfoEntry f = ref e.field;
+        ref CellInfoEntry c = ref e.cell;
+        ref CellInfoEntry v = ref e.vanilla;  
+        c.diffVanilla = !Equals(c.oldval, v.oldval);
+        v.conflictOrDiffPrimary = c.diffVanilla;
+        for(int i=0; i<e.aux.Length; i++)
+        {
+            ref CellInfoEntry a = ref e.aux[i];
+            a.diffVanilla = !Equals(a.oldval, v.oldval);
+            a.conflictOrDiffPrimary = !Equals(a.oldval, c.oldval);
+        }
+        ref CellInfoEntry cmp = ref e.compare;
         cmp.diffVanilla = !Equals(cmp.oldval, v.oldval);
         cmp.conflictOrDiffPrimary = !Equals(cmp.oldval, c.oldval);
 
         c.conflictOrDiffPrimary = (c.diffVanilla ? 1 : 0) + e.aux.Count((a) => a.diffVanilla && a.conflictOrDiffPrimary) > 1; //Doesn't mark conflict if it matches primary - check this matches search behaviour
-        //Not marking matchDefault or any other metainfo here.
+    }
+
+    private void FillPropertyRowEntry<T>(ref PropertyRowEntry e, ref int index, string property, T obj, T vobj, List<(string, T)> aobjs, T cobj) where T : Param.Row //Shitty 1-case generic for now. Figure out generifying later.
+    {
+        e.index = index++;
+        FillPropertyRowEntry_Basic_Reflection(ref e, property, obj, vobj, aobjs, cobj);
+        FillPropertyRowEntry_Diffs(ref e);
     }
 
     public void PropEditorParamRowNew(ParamBank bank, Param.Row row, Param.Row vrow, List<(string, Param.Row)> auxRows, Param.Row crow, ref string propSearchString, string activeParam, bool isActiveView, ParamEditorSelectionState selection)
