@@ -145,7 +145,13 @@ public class ParamRowEditor
         }
     }
 
-    private void FillPropertyRowEntry_Basic_Reflection<T>(ref PropertyRowEntry<T> e, string property, T obj, Param.Row robj, T vobj, Param.Row vrobj, List<(string, T)> aobjs, List<(string, Param.Row)> arobjs, T cobj, Param.Row crobj) //Stupid stupid param rows funking my day up
+    private void FillPropertyRowEntry_Object<T>(ref PropertyRowEntry<T> e, ref int index, string property, T obj, Param.Row robj, T vobj, Param.Row vrobj, List<T> aobjs, List<Param.Row> arobjs, T cobj, Param.Row crobj) where T : class
+    {
+        e.index = index++;
+        FillPropertyRowEntry_Basic_Reflection(ref e, property, obj, robj, vobj, vrobj, aobjs, arobjs, cobj, crobj);
+        FillPropertyRowEntry_Diffs(ref e);
+    }
+    private void FillPropertyRowEntry_Basic_Reflection<T>(ref PropertyRowEntry<T> e, string property, T obj, Param.Row robj, T vobj, Param.Row vrobj, List<T> aobjs, List<Param.Row> arobjs, T cobj, Param.Row crobj) where T : class //Stupid stupid param rows funking my day up
     {
         e.isDummy = false;
         ref FieldInfoEntry f = ref e.field;
@@ -153,57 +159,84 @@ public class ParamRowEditor
         f.internalName = property;
         f.proprow = typeof(T).GetProperty(property);
         f.propType = f.proprow.PropertyType;
-        ref CellInfoEntry<T> c = ref e.cell;
-        c.obj = obj;
-        c.row = robj;
-        c.oldval = obj != null ? f.proprow.GetValue(obj) : null; //Using reflection - sad and bad! Alternative? Delegate? inlineable function in a struct so it's fully reified at runtime?
-        ref CellInfoEntry<T> v = ref e.vanilla;
-        v.obj = vobj;
-        v.row = vrobj;
-        v.oldval = vobj != null ? f.proprow.GetValue(vobj) : null;
-
-        //Fix aobjs passing around string tuple
+        FillCellInfoEntry(ref e.cell, obj, robj, f.proprow);
+        FillCellInfoEntry(ref e.vanilla, vobj, vrobj, f.proprow);
         e.aux = new CellInfoEntry<T>[aobjs.Count];
         for(int i=0; i<aobjs.Count; i++)
         {
-            ref CellInfoEntry<T> a = ref e.aux[i];
-            T aobj = aobjs[i].Item2;
-            Param.Row arobj = arobjs[i].Item2;
-            a.obj = aobj;
-            a.row = arobj;
-            a.oldval = aobj != null ? f.proprow.GetValue(aobj) : null;
+            FillCellInfoEntry(ref e.aux[i], aobjs[i], arobjs[i], f.proprow);
         }
-        ref CellInfoEntry<T> cmp = ref e.compare;
-        cmp.obj = cobj;
-        cmp.row = crobj;
-        cmp.oldval = cobj != null ? f.proprow.GetValue(cobj) : null;
+        FillCellInfoEntry(ref e.compare, cobj, crobj, f.proprow);
     }
-
+    private void FillCellInfoEntry<T>(ref CellInfoEntry<T> c, T obj, Param.Row robj, PropertyInfo prop) where T : class
+    {
+        if (obj != null && robj != null)
+        {
+            c.obj = obj;
+            c.row = robj;
+            c.oldval = obj != null ? prop.GetValue(obj) : null; //Using reflection - sad and bad! Alternative? Delegate? inlineable function in a struct so it's fully reified at runtime?
+        }
+        else
+        {
+            c.isNull = true;
+        }
+    }
+    private void FillPropertyRowEntry_Struct<T>(ref PropertyRowEntry<T> e, ref int index, string property, string name, Type type, (bool, T) obj, Param.Row robj, (bool, T) vobj, Param.Row vrobj, List<(bool, T)> aobjs, List<Param.Row> arobjs, (bool, T) cobj, Param.Row crobj) where T : struct
+    {
+        e.index = index++;
+        FillPropertyRowEntry_InnerStruct_Reflection(ref e, property, name, type, obj, robj, vobj, vrobj, aobjs, arobjs, cobj, crobj);
+        FillPropertyRowEntry_Diffs(ref e);
+    }
+    private void FillPropertyRowEntry_InnerStruct_Reflection<T>(ref PropertyRowEntry<T> e, string property, string name, Type type, (bool, T) obj, Param.Row robj, (bool, T) vobj, Param.Row vrobj, List<(bool, T)> aobjs, List<Param.Row> arobjs, (bool, T) cobj, Param.Row crobj) where T : struct //Stupid stupid param rows funking my day up
+    {
+        e.isDummy = false;
+        ref FieldInfoEntry f = ref e.field;
+        f.displayText = name;
+        f.internalName = name;
+        f.proprow = typeof(T).GetProperty(property);
+        f.propType = type;
+        FillCellInfoEntry(ref e.cell, obj, robj, f.proprow);
+        FillCellInfoEntry(ref e.vanilla, vobj, vrobj, f.proprow);
+        e.aux = new CellInfoEntry<T>[aobjs.Count];
+        for(int i=0; i<aobjs.Count; i++)
+        {
+            FillCellInfoEntry(ref e.aux[i], aobjs[i], arobjs[i], f.proprow);
+        }
+        FillCellInfoEntry(ref e.compare, cobj, crobj, f.proprow);
+    }
+    private void FillCellInfoEntry<T>(ref CellInfoEntry<T> c, (bool, T) obj, Param.Row robj, PropertyInfo prop) where T : struct
+    {
+        if (!obj.Item1 && robj != null)
+        {
+            c.obj = obj.Item2;
+            c.row = robj;
+            c.oldval = prop.GetValue(obj.Item2); //Using reflection - sad and bad! Alternative? Delegate? inlineable function in a struct so it's fully reified at runtime?
+        }
+        else
+        {
+            c.isNull = true;
+        }
+    }
     private void FillPropertyRowEntry_Diffs<T>(ref PropertyRowEntry<T> e)
     {
+        Type t = e.field.propType;
         ref FieldInfoEntry f = ref e.field;
         ref CellInfoEntry<T> c = ref e.cell;
         ref CellInfoEntry<T> v = ref e.vanilla;  
-        c.diffVanilla = !Equals(c.oldval, v.oldval);
+        c.diffVanilla = ParamUtils.IsValueDiff(ref c.oldval, ref v.oldval, t);
         v.conflictOrDiffPrimary = c.diffVanilla;
         for(int i=0; i<e.aux.Length; i++)
         {
             ref CellInfoEntry<T> a = ref e.aux[i];
-            a.diffVanilla = !Equals(a.oldval, v.oldval);
-            a.conflictOrDiffPrimary = !Equals(a.oldval, c.oldval);
+            a.diffVanilla = ParamUtils.IsValueDiff(ref a.oldval, ref v.oldval, t);
+            a.conflictOrDiffPrimary = ParamUtils.IsValueDiff(ref a.oldval, ref c.oldval, t);
         }
         ref CellInfoEntry<T> cmp = ref e.compare;
-        cmp.diffVanilla = !Equals(cmp.oldval, v.oldval);
-        cmp.conflictOrDiffPrimary = !Equals(cmp.oldval, c.oldval);
+        cmp.diffVanilla = ParamUtils.IsValueDiff(ref cmp.oldval, ref v.oldval, t);
+        cmp.conflictOrDiffPrimary = ParamUtils.IsValueDiff(ref cmp.oldval, ref c.oldval, t);
 
         c.conflictOrDiffPrimary = (c.diffVanilla ? 1 : 0) + e.aux.Count((a) => a.diffVanilla && a.conflictOrDiffPrimary) > 1; //Doesn't mark conflict if it matches primary - check this matches search behaviour
-    }
-
-    private void FillPropertyRowEntry<T>(ref PropertyRowEntry<T> e, ref int index, string property, T obj, Param.Row robj, T vobj, Param.Row vrobj, List<(string, T)> aobjs, List<(string, Param.Row)> arobjs, T cobj, Param.Row crobj)
-    {
-        e.index = index++;
-        FillPropertyRowEntry_Basic_Reflection(ref e, property, obj, robj, vobj, vrobj, aobjs, arobjs, cobj, crobj);
-        FillPropertyRowEntry_Diffs(ref e);
+        //v.diffVanilla unused
     }
 
     public void PropEditorParamRowNew(ParamBank bank, Param.Row row, Param.Row vrow, List<(string, Param.Row)> auxRows, Param.Row crow, ref string propSearchString, string activeParam, bool isActiveView, ParamEditorSelectionState selection)
@@ -212,12 +245,32 @@ public class ParamRowEditor
         {
             PropertyRowEntry<Param.Row>[] rowFields = new PropertyRowEntry<Param.Row>[2];
             int index = 0;
-            FillPropertyRowEntry(ref rowFields[0], ref index, "Name", row, row, vrow, vrow, auxRows, auxRows, crow, crow);
-            FillPropertyRowEntry(ref rowFields[1], ref index, "ID", row, row, vrow, crow, auxRows, auxRows, crow, crow);
+            List<Param.Row> auxRowsF = auxRows.Select((x)=>x.Item2).ToList(); //Fiddle with input data a little
+            FillPropertyRowEntry_Object(ref rowFields[0], ref index, "Name", row, row, vrow, vrow, auxRowsF, auxRowsF, crow, crow);
+            FillPropertyRowEntry_Object(ref rowFields[1], ref index, "ID", row, row, vrow, crow, auxRowsF, auxRowsF, crow, crow);
             return rowFields;
         });
         PropertyRowEntry<Param.Cell>[] propertyRowsPinned = [];//TODO
-        PropertyRowEntry<Param.Cell>[] propertyRows = [];//TODO
+        var search = propSearchString;
+        PropertyRowEntry<Param.Cell>[] propertyRows = UICache.GetCached(_paramEditor, row, "fields", () =>
+        {
+            List<Param.Column> cols = SearchEngine.cell.Search((activeParam, row), search, true, true).Where((x)=>x.Item1 == PseudoColumn.None).Select((x)=>x.Item2).ToList();
+            //TODO Apply meta sorting and dummyrows here
+            List<Param.Column> vcols = cols.Select((x, i) => (PseudoColumn.None, x).GetAs(ParamBank.VanillaBank.GetParamFromName(activeParam)).Item2).ToList();
+            List<List<Param.Column>> auxCols = auxRows.Select((r, i) =>
+                    cols.Select((c, j) => (PseudoColumn.None, c).GetAs(ResDirectory.CurrentGame.AuxProjects[r.Item1].ParamBank.GetParamFromName(activeParam)).Item2)
+                        .ToList()).ToList();
+            PropertyRowEntry<Param.Cell>[] rowFields = new PropertyRowEntry<Param.Cell>[cols.Count];
+            int index = 2;
+            for (int i=0; i<rowFields.Length; i++)
+            {
+                Param.Column col = cols[i];
+                Param.Column vcol = vcols[i];
+                List<Param.Column> acol = auxCols.Select((x) => x[i]).ToList();
+                FillPropertyRowEntry_Struct(ref rowFields[i], ref index, "Value", col.Def.InternalName, (PseudoColumn.None, col).GetColumnType(), (row==null, row?[col]??default), row, (vrow==null, vrow?[col]??default), vrow, acol.Select((x)=>(auxRows[i].Item2==null, auxRows[i].Item2?[x]??default)).ToList(), auxRows.Select((x)=>x.Item2).ToList(), (crow==null, crow?[col]??default), crow);
+            }
+            return rowFields;
+        });
 
         ParamMetaData meta = ParamMetaData.Get(row.Def);
 
@@ -492,6 +545,7 @@ public class ParamRowEditor
     }
     private struct CellInfoEntry<T>
     {
+        internal bool isNull;
         internal T obj;
         internal Param.Row row; //Still here for legacy reasons
         internal object oldval;
@@ -606,7 +660,7 @@ public class ParamRowEditor
         object newval = null;
         //ENTRY.CELL
         ref CellInfoEntry<T> cell = ref entry.cell;
-        if (ImGui.TableNextColumn())
+        if (ImGui.TableNextColumn() && !cell.isNull)
         {
             if (cell.conflictOrDiffPrimary)
             {
@@ -654,7 +708,7 @@ public class ParamRowEditor
         ImGui.PushStyleColorVec4(ImGuiCol.FrameBg, new Vector4(0.180f, 0.180f, 0.196f, 1.0f));
         ImGui.PushStyleColorVec4(ImGuiCol.Text, new Vector4(0.9f, 0.9f, 0.9f, 1.0f));
 
-        if (CFG.Current.Param_ShowVanillaParams && ImGui.TableNextColumn() && vanilla.obj != null)
+        if (CFG.Current.Param_ShowVanillaParams && ImGui.TableNextColumn() && !vanilla.isNull)
         {
             AdditionalColumnValue(ref field, ref vanilla, bank, @$"##colvalvanilla");
         }
@@ -663,7 +717,7 @@ public class ParamRowEditor
         for (var i = 0; i < entry.aux.Length; i++)
         {
             ref CellInfoEntry<T> aux = ref entry.aux[i];
-            if (ImGui.TableNextColumn())
+            if (ImGui.TableNextColumn() && !aux.isNull)
             {
                 if (!cell.conflictOrDiffPrimary && aux.diffVanilla)
                 {
@@ -683,7 +737,7 @@ public class ParamRowEditor
 
         //COMPARE
         CellInfoEntry<T> compare = entry.compare;
-        if (compare.obj != null && ImGui.TableNextColumn())
+        if (!compare.isNull && ImGui.TableNextColumn())
         {
             if (compare.conflictOrDiffPrimary)
             {
