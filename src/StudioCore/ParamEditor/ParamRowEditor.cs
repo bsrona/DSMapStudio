@@ -247,7 +247,7 @@ public class ParamRowEditor
             int index = 0;
             List<Param.Row> auxRowsF = auxRows.Select((x)=>x.Item2).ToList(); //Fiddle with input data a little
             FillPropertyRowEntry_Object(ref rowFields[0], ref index, "Name", row, row, vrow, vrow, auxRowsF, auxRowsF, crow, crow);
-            FillPropertyRowEntry_Object(ref rowFields[1], ref index, "ID", row, row, vrow, crow, auxRowsF, auxRowsF, crow, crow);
+            FillPropertyRowEntry_Object(ref rowFields[1], ref index, "ID", row, row, vrow, vrow, auxRowsF, auxRowsF, crow, crow);
             return rowFields;
         });
         PropertyRowEntry<Param.Cell>[] propertyRowsPinned = [];//TODO
