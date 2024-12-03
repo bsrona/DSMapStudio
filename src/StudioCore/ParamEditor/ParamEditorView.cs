@@ -601,6 +601,8 @@ public class ParamEditorView
         {
             ImGui.BeginChild("columns" + activeParam);
             Param vanillaParam = ParamBank.VanillaBank.Params?.GetValueOrDefault(activeParam);
+            ParamMetaData meta = ParamMetaData.Get(activeRow.Def);
+            bool limitHeight = meta.CalcCorrectDef!=null || meta.SoulCostDef!=null;
             _propEditor.PropEditorParamRowNew(
                 ParamBank.PrimaryBank,
                 activeRow,
@@ -611,7 +613,12 @@ public class ParamEditorView
                 ref _selection.GetCurrentPropSearchString(),
                 activeParam,
                 isActiveView,
-                _selection);
+                _selection,
+                limitHeight);
+            if (limitHeight)
+            {
+                EditorDecorations.DrawCalcCorrectGraph(_paramEditor, meta, activeRow);
+            }
             ImGui.EndChild();
         }
     }

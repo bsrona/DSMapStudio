@@ -239,7 +239,7 @@ public class ParamRowEditor
         //v.diffVanilla unused
     }
 
-    public void PropEditorParamRowNew(ParamBank bank, Param.Row row, Param.Row vrow, List<(string, Param.Row)> auxRows, Param.Row crow, ref string propSearchString, string activeParam, bool isActiveView, ParamEditorSelectionState selection)
+    public void PropEditorParamRowNew(ParamBank bank, Param.Row row, Param.Row vrow, List<(string, Param.Row)> auxRows, Param.Row crow, ref string propSearchString, string activeParam, bool isActiveView, ParamEditorSelectionState selection, bool limitHeight)
     {
         PropertyRowEntry<Param.Row>[] propertyRowsHeader = UICache.GetCached(_paramEditor, row, "fieldsHeader", () =>
         {
@@ -271,16 +271,12 @@ public class ParamRowEditor
             }
             return rowFields;
         });
-
-        ParamMetaData meta = ParamMetaData.Get(row.Def);
-
-        var imguiId = 0;
         var showVanilla = CFG.Current.Param_ShowVanillaParams;
         var showParamCompare = auxRows.Count > 0;
         var showRowCompare = crow != null;
         var showColumnHeaders = showParamCompare;
         
-        float fieldDataHeight = meta.CalcCorrectDef != null || meta.SoulCostDef != null ? ImGui.GetWindowHeight() * 3/5f : -1;
+        float fieldDataHeight = limitHeight ? ImGui.GetWindowHeight() * 3/5f : -1;
         if (ImGui.BeginChild("regularFieldData", new Vector2(-1, fieldDataHeight), ImGuiChildFlags.AlwaysAutoResize))
         {
             PropEditorParamRow_Header(isActiveView, ref propSearchString);
@@ -366,11 +362,6 @@ public class ParamRowEditor
                 ImGui.EndTable();
             }
             ImGui.EndChild();
-        }
-        
-        if (meta.CalcCorrectDef != null || meta.SoulCostDef != null)
-        {
-            EditorDecorations.DrawCalcCorrectGraph(_paramEditor, meta, row);
         }
     }
     public void PropEditorParamRow(ParamBank bank, Param.Row row, Param.Row vrow, List<(string, Param.Row)> auxRows,
