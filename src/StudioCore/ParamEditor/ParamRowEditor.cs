@@ -245,6 +245,7 @@ public class ParamRowEditor
         if (FieldMetaData._FieldMetas.TryGetValue(field, out FieldMetaData meta))
         {
             ref FieldInfoEntry f = ref e.field;
+            f.meta = meta;
             f.wiki = meta.Wiki;
             f.displayText = meta.AltName;
             (f.activeFmgRefText, f.inactiveFmgRefText) = FmgRefText(meta.FmgRef, e.cell.row);
@@ -920,7 +921,7 @@ public class ParamRowEditor
         }
 
         //COMPARE
-        CellInfoEntry<T> compare = entry.compare;
+        ref CellInfoEntry<T> compare = ref entry.compare;
         if (!compare.isNull && ImGui.TableNextColumn())
         {
             if (compare.conflictOrDiffPrimary)
@@ -975,7 +976,7 @@ public class ParamRowEditor
         bool anyItem = false;
         if (!CFG.Current.Param_HideReferenceRows && field.isParamRef)
         {
-            if (cell.paramRefText != null)
+            if (!string.IsNullOrEmpty(cell.paramRefText)) //cache this work too? finetune cell.paramRefText to be nullable?
             {
                 ImGui.PushStyleColorVec4(ImGuiCol.Text, new Vector4(1.0f, 0.5f, 0.5f, 1.0f));
                 ImGui.TextUnformatted(cell.paramRefText);
@@ -991,7 +992,7 @@ public class ParamRowEditor
 
         if (!CFG.Current.Param_HideReferenceRows && field.isFMGRef)
         {
-            if (cell.fmgRefText != null) //Original technically also denies whitespace-only entries
+            if (!string.IsNullOrEmpty(cell.fmgRefText)) //cache this work too? finetune cell.fmgRefText to be nullable?
             {
                 ImGui.PushStyleColorVec4(ImGuiCol.Text, new Vector4(1.0f, 0.5f, 0.5f, 1.0f));
                 ImGui.TextUnformatted(cell.fmgRefText);
