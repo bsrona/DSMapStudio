@@ -248,23 +248,119 @@ public class ParamRowEditor
             f.wiki = meta.Wiki;
             f.displayText = meta.AltName;
             (f.activeFmgRefText, f.inactiveFmgRefText) = FmgRefText(meta.FmgRef, e.cell.row);
-            f.isFMGRef = f.activeFmgRefText != null;
+            f.isFMGRef = f.activeFmgRefText != null || f.inactiveFmgRefText != null;
+            (f.activeParamRefText, f.inactiveParamRefText) = ParamRefText(meta.RefTypes, e.cell.row);
+            f.isParamRef = f.activeParamRefText != null || f.inactiveParamRefText != null;
             ref CellInfoEntry<T> c = ref e.cell;
             c.fmgRefText = FmgRefValues(meta.FmgRef, c.row, c.oldval);
+            c.paramRefText = ParamRefValues(meta.RefTypes, c.row, c.oldval);
             ref CellInfoEntry<T> v = ref e.vanilla;
             v.fmgRefText = FmgRefValues(meta.FmgRef, v.row, v.oldval);
+            v.paramRefText = ParamRefValues(meta.RefTypes, v.row, v.oldval);
             for (int i=0; i<e.aux.Length; i++)
             {
                 ref CellInfoEntry<T> a = ref e.aux[i];
                 a.fmgRefText = FmgRefValues(meta.FmgRef, a.row, a.oldval);
+                a.paramRefText = ParamRefValues(meta.RefTypes, a.row, a.oldval);
             }
             ref CellInfoEntry<T> cmp = ref e.compare;
             cmp.fmgRefText = FmgRefValues(meta.FmgRef, cmp.row, cmp.oldval);
+            cmp.paramRefText = ParamRefValues(meta.RefTypes, cmp.row, cmp.oldval);
         }
+    }
+    private (string, string) ParamRefText(List<ParamRef> paramRef, Param.Row context) //Modified from editordecorations. move elsewhere.
+    {
+        if (paramRef == null || paramRef.Count == 0)
+            return (null, null);
+        (List<ParamRef> activeRefs, List<ParamRef> inactiveRefs) = ActiveParamRefs(paramRef, context);
+        return (string.Join(',', activeRefs.Select((r) => r.param)), string.Join(',', inactiveRefs.Select((r) => $@"!{r.param}")));
+    }
+    private string ParamRefValues(List<ParamRef> paramRef, Param.Row context, object oldval) //Modified from editordecorations. move elsewhere.
+    {
+        if (paramRef == null)
+            return null;
+        int val = 0;
+        try
+        {
+            val = Convert.ToInt32(oldval);
+        }
+        catch (Exception e)
+        {
+            return null;
+        }
+        (List<ParamRef> activeRefs, List<ParamRef> inactiveRefs) = ActiveParamRefs(paramRef, context);
+        //Nicked resolution code from editordecorations again. Seriously move this.
+        var refs = activeRefs.Select(rf => {
+            if (!Locator.ActiveProject.ParamBank.Params.TryGetValue(rf.param, out Param param))
+                return null;
+            var altval = val;
+            var postfix = "";
+            if (rf.offset != 0)
+            {
+                altval += rf.offset;
+                postfix += rf.offset > 0 ? "+" + rf.offset : rf.offset;
+            }
+            ParamMetaData meta = ParamMetaData.Get(param.AppliedParamdef);
+            if (meta != null && meta.Row0Dummy && altval == 0)
+                return null;
+            Param.Row r = param[altval];
+            if (r == null && altval > 0 && meta != null)
+            {
+                if (meta.FixedOffset != 0)
+                {
+                    altval = val + meta.FixedOffset;
+                    postfix += meta.FixedOffset > 0 ? "+" + meta.FixedOffset : meta.FixedOffset;
+                }
+                if (meta.OffsetSize > 0)
+                {
+                    altval = altval - (altval % meta.OffsetSize);
+                    postfix += "+" + (val % meta.OffsetSize);
+                }
+                r = param[altval];
+            }
+            if (r == null)
+                return null;
+            if (string.IsNullOrWhiteSpace(r.Name))
+                return "Unnamed Row" + postfix;
+            return r.Name + postfix;
+        }).Where(x => x != null);
+        return string.Join(',', refs);
+    }
+    private (List<ParamRef>, List<ParamRef>) ActiveParamRefs(List<ParamRef> fmgRef, Param.Row context)
+    {
+        List<ParamRef> activeRefs = new();
+        List<ParamRef> inactiveRefs = new();
+        foreach (ParamRef r in fmgRef)
+        {
+            if (context == null || r.conditionField == null)
+            {
+                activeRefs.Add(r);
+                continue;
+            }
+            Param.Cell? c = context?[r.conditionField];
+            if (c==null || !c.HasValue)
+            {
+                inactiveRefs.Add(r);
+                continue;
+            }
+            try
+            {
+                int value = Convert.ToInt32(c.Value.Value);
+                if (r.conditionValue == value)
+                    activeRefs.Add(r);
+                else
+                    inactiveRefs.Add(r);
+            }
+            catch (Exception e)
+            {
+                inactiveRefs.Add(r);
+            }
+        }
+        return (activeRefs, inactiveRefs);
     }
     private (string, string) FmgRefText(List<FMGRef> fmgRef, Param.Row context) //Modified from editordecorations. move elsewhere.
     {
-        if (fmgRef == null)
+        if (fmgRef == null || fmgRef.Count == 0)
             return (null, null);
         (List<FMGRef> activeRefs, List<FMGRef> inactiveRefs) = ActiveFMGRefs(fmgRef, context);
         return (string.Join(',', activeRefs.Select((r) => r.fmg)), string.Join(',', inactiveRefs.Select((r) => $@"!{r.fmg}")));
