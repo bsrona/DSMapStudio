@@ -9,6 +9,8 @@ using System.Linq;
 using System.Numerics;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using DotNext.Collections.Specialized;
+using StudioCore.TextEditor;
 
 namespace StudioCore.ParamEditor;
 
@@ -238,6 +240,94 @@ public class ParamRowEditor
         c.conflictOrDiffPrimary = (c.diffVanilla ? 1 : 0) + e.aux.Count((a) => a.diffVanilla && a.conflictOrDiffPrimary) > 1; //Doesn't mark conflict if it matches primary - check this matches search behaviour
         //v.diffVanilla unused
     }
+    private void FillMetaFromFieldMeta<T>(ref PropertyRowEntry<T> e, PARAMDEF.Field field)
+    {
+        if (FieldMetaData._FieldMetas.TryGetValue(field, out FieldMetaData meta))
+        {
+            ref FieldInfoEntry f = ref e.field;
+            (f.activeFmgRefText, f.inactiveFmgRefText) = FmgRefText(meta.FmgRef, e.cell.row);
+            f.isFMGRef = f.activeFmgRefText != null;
+            ref CellInfoEntry<T> c = ref e.cell;
+            c.fmgRefText = FmgRefValues(meta.FmgRef, c.row, c.oldval);
+            ref CellInfoEntry<T> v = ref e.vanilla;
+            v.fmgRefText = FmgRefValues(meta.FmgRef, v.row, v.oldval);
+            for (int i=0; i<e.aux.Length; i++)
+            {
+                ref CellInfoEntry<T> a = ref e.aux[i];
+                a.fmgRefText = FmgRefValues(meta.FmgRef, a.row, a.oldval);
+            }
+            ref CellInfoEntry<T> cmp = ref e.compare;
+            cmp.fmgRefText = FmgRefValues(meta.FmgRef, cmp.row, cmp.oldval);
+        }
+    }
+    private (string, string) FmgRefText(List<FMGRef> fmgRef, Param.Row context) //Modified from editordecorations. move elsewhere.
+    {
+        if (fmgRef == null)
+            return (null, null);
+        (List<FMGRef> activeRefs, List<FMGRef> inactiveRefs) = ActiveFMGRefs(fmgRef, context);
+        return (string.Join(',', activeRefs.Select((r) => r.fmg)), string.Join(',', inactiveRefs.Select((r) => $@"!{r.fmg}")));
+    }
+    //Reinventing editordecorations.resolvefmgrefs
+    private string FmgRefValues(List<FMGRef> fmgRef, Param.Row context, object oldval) //Modified from editordecorations. move elsewhere.
+    {
+        if (fmgRef == null)
+            return null;
+        int val = 0;
+        try
+        {
+            val = Convert.ToInt32(oldval);
+        }
+        catch (Exception e)
+        {
+            return null;
+        }
+        (List<FMGRef> activeRefs, List<FMGRef> inactiveRefs) = ActiveFMGRefs(fmgRef, context);
+        var refs = activeRefs.Select(rf => Locator.ActiveProject.FMGBank.FmgInfoBank.FirstOrDefault(x => x.Name == rf.fmg))
+            .Where(fmgi => fmgi != null)
+            .Select(fmgi => {
+                FMGEntryGroup group = Locator.ActiveProject.FMGBank.GenerateEntryGroup(val, fmgi);
+                //TODO: add default stringifying to entrygroup
+                if (group.Title != null) return group.Title.Text;
+                if (group.Summary != null) return group.Summary.Text;
+                if (group.Description != null) return group.Description.Text;
+                if (group.TextBody != null) return group.TextBody.Text;
+                if (group.ExtraText != null) return group.ExtraText.Text;
+                return "";
+            });
+        return string.Join(',', refs);
+    }
+    private (List<FMGRef>, List<FMGRef>) ActiveFMGRefs(List<FMGRef> fmgRef, Param.Row context)
+    {
+        List<FMGRef> activeRefs = new();
+        List<FMGRef> inactiveRefs = new();
+        foreach (FMGRef r in fmgRef)
+        {
+            if (context == null || r.conditionField == null)
+            {
+                activeRefs.Add(r);
+                continue;
+            }
+            Param.Cell? c = context?[r.conditionField];
+            if (c==null || !c.HasValue)
+            {
+                inactiveRefs.Add(r);
+                continue;
+            }
+            try
+            {
+                int value = Convert.ToInt32(c.Value.Value);
+                if (r.conditionValue == value)
+                    activeRefs.Add(r);
+                else
+                    inactiveRefs.Add(r);
+            }
+            catch (Exception e)
+            {
+                inactiveRefs.Add(r);
+            }
+        }
+        return (activeRefs, inactiveRefs);
+    }
 
     public void PropEditorParamRowNew(ParamBank bank, Param.Row row, Param.Row vrow, List<(string, Param.Row)> auxRows, Param.Row crow, ref string propSearchString, string activeParam, bool isActiveView, ParamEditorSelectionState selection, bool limitHeight)
     {
@@ -268,6 +358,7 @@ public class ParamRowEditor
                 Param.Column vcol = vcols[i];
                 List<Param.Column> acol = auxCols.Select((x) => x[i]).ToList();
                 FillPropertyRowEntry_Struct(ref rowFields[i], ref index, "Value", col.Def.InternalName, (PseudoColumn.None, col).GetColumnType(), (row==null, row?[col]??default), row, (vrow==null, vrow?[col]??default), vrow, acol.Select((x)=>(auxRows[i].Item2==null, auxRows[i].Item2?[x]??default)).ToList(), auxRows.Select((x)=>x.Item2).ToList(), (crow==null, crow?[col]??default), crow);
+                FillMetaFromFieldMeta(ref rowFields[i], col.Def);
             }
             return rowFields;
         });
@@ -606,8 +697,10 @@ public class ParamRowEditor
                 ImGui.PushStyleVarVec2(ImGuiStyleVar.ItemSpacing, new Vector2(0, 0));
                 ImGui.PushStyleColorVec4(ImGuiCol.Text, new Vector4(1.0f, 1.0f, 0.0f, 1.0f));
                 ImGui.TextUnformatted(@"   <");
+                ImGui.SameLine();
                 ImGui.TextUnformatted(field.activeParamRefText);
                 ImGui.PushStyleColorVec4(ImGuiCol.Text, new Vector4(0.7f, 0.7f, 0.7f, 1.0f));
+                ImGui.SameLine();
                 ImGui.TextUnformatted(field.inactiveParamRefText);
                 ImGui.PopStyleColor(1);
                 ImGui.SameLine();
@@ -622,8 +715,10 @@ public class ParamRowEditor
                 ImGui.PushStyleVarVec2(ImGuiStyleVar.ItemSpacing, new Vector2(0, 0));
                 ImGui.PushStyleColorVec4(ImGuiCol.Text, new Vector4(1.0f, 1.0f, 0.0f, 1.0f));
                 ImGui.TextUnformatted(@"   [");
+                ImGui.SameLine();
                 ImGui.TextUnformatted(field.activeFmgRefText);
                 ImGui.PushStyleColorVec4(ImGuiCol.Text, new Vector4(0.7f, 0.7f, 0.7f, 1.0f));
+                ImGui.SameLine();
                 ImGui.TextUnformatted(field.inactiveFmgRefText);
                 ImGui.PopStyleColor(1);
                 ImGui.SameLine();
