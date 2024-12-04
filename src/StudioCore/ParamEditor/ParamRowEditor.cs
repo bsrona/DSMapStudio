@@ -245,6 +245,8 @@ public class ParamRowEditor
         if (FieldMetaData._FieldMetas.TryGetValue(field, out FieldMetaData meta))
         {
             ref FieldInfoEntry f = ref e.field;
+            f.wiki = meta.Wiki;
+            f.displayText = meta.AltName;
             (f.activeFmgRefText, f.inactiveFmgRefText) = FmgRefText(meta.FmgRef, e.cell.row);
             f.isFMGRef = f.activeFmgRefText != null;
             ref CellInfoEntry<T> c = ref e.cell;
