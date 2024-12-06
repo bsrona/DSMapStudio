@@ -245,29 +245,51 @@ public class ParamRowEditor
         if (FieldMetaData._FieldMetas.TryGetValue(field, out FieldMetaData meta))
         {
             ref FieldInfoEntry f = ref e.field;
+            ref CellInfoEntry<T> c = ref e.cell;
             f.meta = meta;
             f.wiki = meta.Wiki;
             f.displayText = meta.AltName;
-            (f.activeFmgRefText, f.inactiveFmgRefText) = FmgRefText(meta.FmgRef, e.cell.row);
+            (f.activeFmgRefText, f.inactiveFmgRefText) = FmgRefText(meta.FmgRef, c.row);
             f.isFMGRef = f.activeFmgRefText != null || f.inactiveFmgRefText != null;
-            (f.activeParamRefText, f.inactiveParamRefText) = ParamRefText(meta.RefTypes, e.cell.row);
+            (f.activeParamRefText, f.inactiveParamRefText) = ParamRefText(meta.RefTypes, c.row);
             f.isParamRef = f.activeParamRefText != null || f.inactiveParamRefText != null;
-            ref CellInfoEntry<T> c = ref e.cell;
+            f.enumText = EnumText(meta.EnumType, c.row);
+            f.isEnum = f.enumText != null;
+
             c.fmgRefText = FmgRefValues(meta.FmgRef, c.row, c.oldval);
             c.paramRefText = ParamRefValues(meta.RefTypes, c.row, c.oldval);
+            c.enumText = EnumValue(meta.EnumType, c.row, c.oldval);
+
             ref CellInfoEntry<T> v = ref e.vanilla;
             v.fmgRefText = FmgRefValues(meta.FmgRef, v.row, v.oldval);
             v.paramRefText = ParamRefValues(meta.RefTypes, v.row, v.oldval);
+            v.enumText = EnumValue(meta.EnumType, v.row, v.oldval);
+
             for (int i=0; i<e.aux.Length; i++)
             {
                 ref CellInfoEntry<T> a = ref e.aux[i];
                 a.fmgRefText = FmgRefValues(meta.FmgRef, a.row, a.oldval);
                 a.paramRefText = ParamRefValues(meta.RefTypes, a.row, a.oldval);
+                a.enumText = EnumValue(meta.EnumType, a.row, a.oldval);
             }
+
             ref CellInfoEntry<T> cmp = ref e.compare;
             cmp.fmgRefText = FmgRefValues(meta.FmgRef, cmp.row, cmp.oldval);
             cmp.paramRefText = ParamRefValues(meta.RefTypes, cmp.row, cmp.oldval);
+            cmp.enumText = EnumValue(meta.EnumType, cmp.row, cmp.oldval);
         }
+    }
+    private string EnumText(ParamEnum e, Param.Row context)
+    {
+        if (e == null)
+            return null;
+        return e?.name;
+    }
+    private string EnumValue(ParamEnum e, Param.Row context, object oldval)
+    {
+        if (e == null || oldval == null)
+            return null;
+        return e?.values.GetValueOrDefault(oldval.ToParamEditorString());
     }
     private (string, string) ParamRefText(List<ParamRef> paramRef, Param.Row context) //Modified from editordecorations. move elsewhere.
     {
