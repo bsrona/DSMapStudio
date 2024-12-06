@@ -2067,13 +2067,16 @@ public class ParamEditorScreen : EditorScreen
         if (ImGui.CollapsingHeader("Fields"))
         {
             EditorDecorations.ShowHelpMarker("Crowd-sourced names will appear before the canonical name in the Field View list.");
-            ImGui.Checkbox("Show community field names first", ref CFG.Current.Param_MakeMetaNamesPrimary);
+            if (ImGui.Checkbox("Show community field names first", ref CFG.Current.Param_MakeMetaNamesPrimary))
+                UICache.ClearCaches();
 
             EditorDecorations.ShowHelpMarker("The crowd-sourced name (or the canonical name if the above option is enabled) will appear after the initial name in the Field View list.");
-            ImGui.Checkbox("Show secondary field names", ref CFG.Current.Param_ShowSecondaryNames);
+            if (ImGui.Checkbox("Show secondary field names", ref CFG.Current.Param_ShowSecondaryNames))
+                UICache.ClearCaches();
 
             EditorDecorations.ShowHelpMarker("The field offset within the .PARAM file will be show to the left in the Field View List.");
-            ImGui.Checkbox("Show field data offsets", ref CFG.Current.Param_ShowFieldOffsets);
+            if (ImGui.Checkbox("Show field data offsets", ref CFG.Current.Param_ShowFieldOffsets))
+                UICache.ClearCaches();
 
             EditorDecorations.ShowHelpMarker("Hide the generated param references for fields that link to other params.");
             ImGui.Checkbox("Hide field references", ref CFG.Current.Param_HideReferenceRows);

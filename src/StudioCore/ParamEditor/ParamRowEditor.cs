@@ -248,7 +248,7 @@ public class ParamRowEditor
             ref CellInfoEntry<T> c = ref e.cell;
             f.meta = meta;
             f.wiki = meta.Wiki;
-            f.displayText = meta.AltName;
+            f.displayText = NameText(f.internalName, meta.AltName, f.col);
             (f.activeFmgRefText, f.inactiveFmgRefText) = FmgRefText(meta.FmgRef, c.row);
             f.isFMGRef = f.activeFmgRefText != null || f.inactiveFmgRefText != null;
             (f.activeParamRefText, f.inactiveParamRefText) = ParamRefText(meta.RefTypes, c.row);
@@ -278,6 +278,16 @@ public class ParamRowEditor
             cmp.paramRefText = ParamRefValues(meta.RefTypes, cmp.row, cmp.oldval);
             cmp.enumText = EnumValue(meta.EnumType, cmp.row, cmp.oldval);
         }
+    }
+    private string NameText(string internalName, string altName, Param.Column col)
+    {
+        if (CFG.Current.Param_MakeMetaNamesPrimary && !string.IsNullOrWhiteSpace(altName))
+            (altName, internalName) = (internalName, altName);
+        string offsetComponent = CFG.Current.Param_ShowFieldOffsets ? OffsetTextOfColumn(col) : "";
+        string primaryNameComponent = internalName;
+        string secondaryNameComponent = CFG.Current.Param_ShowSecondaryNames && !string.IsNullOrWhiteSpace(altName) ? $" ({altName})": "";
+        
+        return $"{offsetComponent}{primaryNameComponent}{secondaryNameComponent}";
     }
     private string EnumText(ParamEnum e, Param.Row context)
     {
@@ -479,6 +489,7 @@ public class ParamRowEditor
                 Param.Column vcol = vcols[i];
                 List<Param.Column> acol = auxCols.Select((x) => x[i]).ToList();
                 FillPropertyRowEntry_Struct(ref rowFields[i], ref index, "Value", col.Def.InternalName, (PseudoColumn.None, col).GetColumnType(), (row==null, row?[col]??default), row, (vrow==null, vrow?[col]??default), vrow, acol.Select((x)=>(auxRows[i].Item2==null, auxRows[i].Item2?[x]??default)).ToList(), auxRows.Select((x)=>x.Item2).ToList(), (crow==null, crow?[col]??default), crow);
+                rowFields[i].field.col = col; //dirty but not generic (unless we subscribe harder to forcing param row into things which is bad)
                 FillMetaFromFieldMeta(ref rowFields[i], col.Def);
             }
             return rowFields;
@@ -1321,21 +1332,21 @@ public class ParamRowEditor
     {
         if (col == null)
         {
-            return null;
+            return "";
         }
 
         if (col.Def.BitSize == -1)
         {
-            return col.GetByteOffset().ToString("x");
+            return $"0x{col.GetByteOffset().ToString("x")} ";
         }
 
         var offS = col.GetBitOffset();
         if (col.Def.BitSize == 1)
         {
-            return $"{col.GetByteOffset().ToString("x")} [{offS}]";
+            return $"0x{col.GetByteOffset().ToString("x")} [{offS}] ";
         }
 
-        return $"{col.GetByteOffset().ToString("x")} [{offS}-{offS + col.Def.BitSize - 1}]";
+        return $"0x{col.GetByteOffset().ToString("x")} [{offS}-{offS + col.Def.BitSize - 1}] ";
     }
 
     private static void PropertyRowName(string fieldOffset, ref string internalName, FieldMetaData cellMeta)
