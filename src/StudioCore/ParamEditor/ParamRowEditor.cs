@@ -249,35 +249,30 @@ public class ParamRowEditor
             f.meta = meta;
             f.wiki = meta.Wiki;
             f.displayText = NameText(f.internalName, meta.AltName, f.col);
+            
             (f.activeFmgRefText, f.inactiveFmgRefText) = FmgRefText(meta.FmgRef, c.row);
             f.isFMGRef = f.activeFmgRefText != null || f.inactiveFmgRefText != null;
+
             (f.activeParamRefText, f.inactiveParamRefText) = ParamRefText(meta.RefTypes, c.row);
             f.isParamRef = f.activeParamRefText != null || f.inactiveParamRefText != null;
+
             f.enumText = EnumText(meta.EnumType, c.row);
             f.isEnum = f.enumText != null;
 
-            c.fmgRefText = FmgRefValues(meta.FmgRef, c.row, c.oldval);
-            c.paramRefText = ParamRefValues(meta.RefTypes, c.row, c.oldval);
-            c.enumText = EnumValue(meta.EnumType, c.row, c.oldval);
-
-            ref CellInfoEntry<T> v = ref e.vanilla;
-            v.fmgRefText = FmgRefValues(meta.FmgRef, v.row, v.oldval);
-            v.paramRefText = ParamRefValues(meta.RefTypes, v.row, v.oldval);
-            v.enumText = EnumValue(meta.EnumType, v.row, v.oldval);
-
+            FillMetaFromFieldMeta(ref c, meta);
+            FillMetaFromFieldMeta(ref e.vanilla, meta);
             for (int i=0; i<e.aux.Length; i++)
             {
-                ref CellInfoEntry<T> a = ref e.aux[i];
-                a.fmgRefText = FmgRefValues(meta.FmgRef, a.row, a.oldval);
-                a.paramRefText = ParamRefValues(meta.RefTypes, a.row, a.oldval);
-                a.enumText = EnumValue(meta.EnumType, a.row, a.oldval);
+                FillMetaFromFieldMeta(ref e.aux[i], meta);
             }
-
-            ref CellInfoEntry<T> cmp = ref e.compare;
-            cmp.fmgRefText = FmgRefValues(meta.FmgRef, cmp.row, cmp.oldval);
-            cmp.paramRefText = ParamRefValues(meta.RefTypes, cmp.row, cmp.oldval);
-            cmp.enumText = EnumValue(meta.EnumType, cmp.row, cmp.oldval);
+            FillMetaFromFieldMeta(ref e.compare, meta);
         }
+    }
+    private void FillMetaFromFieldMeta<T>(ref CellInfoEntry<T> c, FieldMetaData meta)
+    {
+        c.fmgRefText = FmgRefValues(meta.FmgRef, c.row, c.oldval);
+        c.paramRefText = ParamRefValues(meta.RefTypes, c.row, c.oldval);
+        c.enumText = EnumValue(meta.EnumType, c.row, c.oldval);
     }
     private string NameText(string internalName, string altName, Param.Column col)
     {
